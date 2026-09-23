@@ -1,0 +1,5 @@
+# Build output (STLs, draft renders, OpenSCAD logs).
+build/
+.DS_Store
+__pycache__/
+*.pyc

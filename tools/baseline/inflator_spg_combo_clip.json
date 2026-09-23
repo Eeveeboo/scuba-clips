@@ -1,0 +1,25 @@
+{
+  "bbox_max": [
+    36.39,
+    18.248,
+    5.0
+  ],
+  "bbox_min": [
+    -11.887,
+    -20.488,
+    -5.0
+  ],
+  "edges_not_used_twice": 2,
+  "file": "inflator_spg_combo_clip.stl",
+  "fn": 100,
+  "open_edges": 0,
+  "openscad_version": "2026.09.12",
+  "size": [
+    48.276,
+    38.736,
+    10.0
+  ],
+  "source_commit": "29a54aa",
+  "triangles": 7828,
+  "volume_mm3": 5242.845
+}

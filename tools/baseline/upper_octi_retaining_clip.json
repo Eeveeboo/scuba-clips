@@ -1,0 +1,25 @@
+{
+  "bbox_max": [
+    31.25,
+    39.131,
+    24.999
+  ],
+  "bbox_min": [
+    -34.25,
+    -9.0,
+    -31.0
+  ],
+  "edges_not_used_twice": 2,
+  "file": "upper_octi_retaining_clip.stl",
+  "fn": 100,
+  "open_edges": 0,
+  "openscad_version": "2026.09.12",
+  "size": [
+    65.5,
+    48.131,
+    55.999
+  ],
+  "source_commit": "29a54aa",
+  "triangles": 15046,
+  "volume_mm3": 28760.04
+}
