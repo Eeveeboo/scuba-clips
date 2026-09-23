@@ -1,5 +1,7 @@
 # Build output (STLs, draft renders, OpenSCAD logs).
 build/
+# uv's environment for the harness tools.
+.venv/
 .DS_Store
 __pycache__/
 *.pyc

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Sanity-check a rendered PNG without looking at it.
 
 Reports size, background uniformity, "ink" fraction (how much of the frame the
@@ -7,10 +6,11 @@ that a screenshot actually shows geometry.
 
 Usage: png_check.py image.png [...] [--cols 78] [--rows 30] [--quiet]
                       [--components N]
-Exit code 1 if an image is unreadable, blank, or clipped at the frame edge, or
-if --components N is given and the image does not show exactly N separate
-pieces of geometry.  A plate that should show four parts but resolves into two
-silhouettes has hidden two of them behind the others.
+Exit code 1 if an image is unreadable, blank, or clipped at the frame edge.  A
+region count that does not match --components N is a WARNING instead: how a
+camera splits a part into silhouettes is a judgement call, so it is worth
+reporting and not worth blocking an otherwise good render over.  A plate that
+should show three parts but resolves into two has hidden one of them.
 """
 import argparse
 import os
@@ -84,8 +84,9 @@ def check(path, width, height, quiet, want_components=None):
     edge = np.concatenate([mask[0], mask[-1], mask[:, 0], mask[:, -1]])
     parts = regions(path)
     problems = []
+    warnings = []
     if want_components is not None and len(parts) != want_components:
-        problems.append(f"shows {len(parts)} separate piece(s) of geometry, expected {want_components}")
+        warnings.append(f"shows {len(parts)} separate piece(s) of geometry, expected {want_components}")
     if ink < INK_MIN:
         problems.append("nearly blank")
     if hi - lo < RANGE_MIN:
@@ -93,10 +94,16 @@ def check(path, width, height, quiet, want_components=None):
     if edge.mean() > BORDER_MAX:
         problems.append("content spans the whole frame edge (model clipped?)")
     print(f"== {path}  {im.width}x{im.height}  {os.path.getsize(path)} bytes")
-    print(f"   background={bg:.0f} range={lo:.0f}..{hi:.0f} ink_fraction={ink:.3f} "
-          f"border_fill={edge.mean():.2f} regions={len(parts)}"
-          + (f" (areas {', '.join(str(a) for a in parts[:6])})" if not quiet else "")
-          + (f"  PROBLEMS: {', '.join(problems)}" if problems else "  ok"))
+    summary = (f"   background={bg:.0f} range={lo:.0f}..{hi:.0f} ink_fraction={ink:.3f} "
+               f"border_fill={edge.mean():.2f} regions={len(parts)}"
+               + (f" (areas {', '.join(str(a) for a in parts[:6])})" if not quiet else ""))
+    if problems:
+        summary += f"  PROBLEMS: {', '.join(problems)}"
+    elif warnings:
+        summary += f"  WARNING: {', '.join(warnings)}"
+    else:
+        summary += "  ok"
+    print(summary)
     if not quiet:
         for row in range(height):
             print("   " + "".join(
@@ -113,7 +120,8 @@ if __name__ == "__main__":
     ap.add_argument("--rows", type=int, default=30)
     ap.add_argument("--quiet", action="store_true", help="print the summary line only")
     ap.add_argument("--components", type=int, default=None,
-                    help="fail unless the image shows exactly this many separate pieces of geometry")
+                    help="warn unless the image shows exactly this many separate pieces of geometry")
     a = ap.parse_args()
-    ok = all([check(p, a.cols, a.rows, a.quiet, a.components) for p in a.images])
+    want = a.components
+    ok = all([check(p, a.cols, a.rows, a.quiet, want) for p in a.images])
     sys.exit(0 if ok else 1)

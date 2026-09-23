@@ -1,0 +1,23 @@
+# The harness tools are Python.  `uv run` builds .venv from this file and
+# uv.lock, so another machine needs uv and OpenSCAD only.
+[project]
+name = "scuba-clips"
+version = "0.1.0"
+description = "Parametric OpenSCAD clips for organising scuba hose"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pillow>=10.3",
+    "solidpython2>=2.1.3",
+]
+
+[dependency-groups]
+dev = [
+    "ty>=0.0.79",
+    "ruff>=0.16.8",
+]
+
+# The user's global uv config holds packages back for 14 days. These three
+# are newer than that window and are needed now, so exempt them.
+[tool.uv]
+exclude-newer-package = { solidpython2 = false, ty = false, ruff = false }
