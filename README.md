@@ -15,7 +15,7 @@ I'm tiny so I can comfortably view the side of my BCD Inflator controls, so I th
 |![](.readme_images/inflator_spg_combo_clip.png)|
 
 ### Octi/Alternate clips
-I just didn't like how either dangly or inaccessible all the ways I had been shown to store my alternate were (I only dive back-mount singles currently, and yes since designing these I have been told about long lose and intend to try it out soon 💖)
+I just didn't like how either dangly or inaccessible all the ways I had been shown to store my alternate were (I only dive back-mount singles currently, and yes since designing these I have been told about long hose and intend to try it out soon 💖)
 
 |Upper|Lower|
 |-|-|
