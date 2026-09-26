@@ -1,6 +1,6 @@
 """The schema and SCAD answers, as plain `Response` values.
 
-The two Vercel entry points and the local dev server share this module, so each
+The Flask app in main.py uses this module to build the HTTP responses, so the
 transport keeps only its own plumbing. No function here touches a socket.
 """
 
