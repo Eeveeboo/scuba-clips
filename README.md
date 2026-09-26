@@ -30,7 +30,6 @@ Is this overkill to replace the velcro? Maybe, but I didn't like it, so I replac
 
 ### Prerequisites 🔧
 
-* make (`sudo apt install make` / `xcode-select --install` / `choco install make`)
 * OpenSCAD 2024 or newer (nightly): <https://openscad.org/downloads.html>.
 * uv: <https://docs.astral.sh/uv/getting-started/installation/>.
 
@@ -43,9 +42,9 @@ Copy `config.example.toml` to `config.toml` and update the measurements to match
 ### Generate the clips ✨
 
 ```sh
-make all # Makes everything once
+uv run cli make-all # Makes everything once
 # or
-make watch # Watches for file changes and rebuilds
+uv run cli watch # Watches for file changes and rebuilds
 ```
 
 Once that completes you should have a bunch of files in the `build/` folder. Grab the STLs and print away! I recommend PETG + 100% infill from my testing 💖
@@ -55,5 +54,13 @@ Once that completes you should have a bunch of files in the `build/` folder. Gra
 If the generator cannot find OpenSCAD give the full path to the program:
 
 ```sh
-make OPENSCAD=/path/to/OpenSCAD/binary [target]
+OPENSCAD=/path/to/OpenSCAD/binary uv run cli make-all
 ```
+
+## License 📜
+
+Copyright (C) 2026 Evelyne.
+
+This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](LICENSE). You may share and adapt the files, but not for commercial use, and you must give credit and share your changes under the same license.
+
+The author keeps all rights, including the right to sell prints and files. If you want a commercial license, contact the author.

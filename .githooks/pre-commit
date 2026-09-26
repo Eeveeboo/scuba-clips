@@ -1,6 +1,8 @@
 #!/bin/sh
-# Refuse a commit that fails ruff or ty.  Enable the hook path with:
+# Refuse a commit that fails ruff or ty, or that leaves config.example.toml
+# behind the defaults in lib/config.py.  Enable the hook path with:
 #   git config core.hooksPath .githooks
 set -e
-make lint
-make typecheck
+uv run --locked cli lint
+uv run --locked cli typecheck
+uv run --locked cli check-config-example

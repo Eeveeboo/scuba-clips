@@ -30,7 +30,7 @@ argument: `translate(v)`, `rotate(a)`, `mirror(v)`.
 The builders return `_Node`, a thin wrapper. solid2's own `+`/`-` flatten a
 nested operand of the same type: `(a - b) - c` becomes one `difference(a,b,c)`
 instead of a nested pair. That changes the CSG tree, the manifold tessellation
-and the non-manifold edge count, and `make check-baseline` rejects it. `_Node`
+and the non-manifold edge count, and `uv run cli check-baseline` rejects it. `_Node`
 keeps the operands nested, so the operators build exactly the tree that
 `union()([a, b])` and `difference()([a, b])` build.
 

@@ -15,6 +15,10 @@ builder reads that one `CONFIG`, so one file sets the numbers for the whole kit.
 Write the example file that lists every default:
 
     uv run python -m lib.config --example
+
+Check that the committed example still matches the defaults:
+
+    uv run python -m lib.config --check
 """
 
 from __future__ import annotations
@@ -59,7 +63,8 @@ class LibraryConfig:
 
 @dataclass(frozen=True)
 class HardwareConfig:
-    """The hoses, the fitting and the webbing this kit fits, in millimetres.
+    """The hoses, the fitting and the webbing this kit fits, and the hose-clip
+    opening angles. Lengths are in millimetres, angles in degrees.
 
     A hose only has a high pressure or a low pressure. Each hose type still
     needs its own diameter: a size up or down changes how hard the clip lets
@@ -84,6 +89,16 @@ class HardwareConfig:
     )
     side_clip_hose_diameter: float = _field(
         12.5, "LP hose held by the lower octopus retaining clip."
+    )
+    tongue_back_angle: float = _field(
+        60.0, "Tongue opening at the back (closed side) of a hose clip, in degrees."
+    )
+    backbone_front_angle: float = _field(
+        90.0, "Opening at the front (open side) of a hose clip, in degrees."
+    )
+    opening_angle_offset: float = _field(
+        15.0,
+        "Extra front opening angle of the clip and of the relief cut, in degrees.",
     )
     webbing_shoulder_size: tuple[float, float] = _field(
         (50.0, 3.0), "Shoulder webbing [width, thickness]."
@@ -333,11 +348,27 @@ def write_example(path: Path | None = None) -> Path:
     is_flag=True,
     help="Write config.example.toml from the defaults in this module.",
 )
-def main(example: bool) -> None:
+@click.option(
+    "--check",
+    is_flag=True,
+    help="Fail if config.example.toml does not match the defaults in this module.",
+)
+def main(example: bool, check: bool) -> None:
     """Write the example TOML that lists every default.
 
     Copy the example to config.toml and edit your own values.
     """
+    if check:
+        expected = render_example()
+        current = (
+            EXAMPLE_PATH.read_text(encoding="utf-8") if EXAMPLE_PATH.exists() else ""
+        )
+        if current != expected:
+            raise click.ClickException(
+                f"{EXAMPLE_PATH.name} is stale. Run `uv run cli config-example` and commit the result."
+            )
+        click.echo(f"config.py: {EXAMPLE_PATH.name} is up to date")
+        return
     if not example:
         raise click.UsageError("pass --example to write config.example.toml")
     path = write_example()
