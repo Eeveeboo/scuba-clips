@@ -22,10 +22,11 @@ dependencies = [
 cli = "tools.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["lib", "models", "tools"]
+packages = ["lib", "models", "tools", "web"]
 
 [dependency-groups]
 dev = [
+    "pytest>=8.0",
     "ty>=0.0.79",
     "ruff>=0.16.8",
 ]
