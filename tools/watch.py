@@ -3,20 +3,28 @@
 
   tools/watch.py
 
-Renders every model once at start, PNG only, into build/watch/, then polls the
-mtimes of the model files and their inputs:
+Renders every model once at start as an STL, a PNG and a .scad into build/
+(WATCH_DIR), then polls the mtimes of the model files and their inputs:
 
   * a change in models/x.py re-renders x, and only x,
   * a change in models/all.py re-renders every model: the plate holds the parts,
-  * a change in lib/*.py or constants/*.py re-renders every model.
+  * a change in lib/*.py or config.toml re-renders every model.
 
-A part change does not refresh all.png.  Only all.py, lib/ and constants/ do.
+Every .py under the models directory counts, at any depth: models/dev/x.py is
+model dev/x and renders to build/dev/x.png.  The name is the path relative to
+the models directory, so a nested model and a top-level one never collide.
+
+A part change does not refresh all.png.  Only all.py, lib/ and config.toml do.
 Changes inside one debounce window are batched into one round, and one model
 renders at a time.  tools/render.py stages and renames, so a render that fails
-leaves the last good image in place.  No dependency is added: the mtimes come
+leaves the last good files in place.  No dependency is added: the mtimes come
 from os.stat.  Run it until you interrupt it with Ctrl-C.
 
-The model list comes from models/*.py.  The paths are overridable by
+A render that succeeds prints a green line.  A render that fails prints a bold
+red line to stderr, and a red line counts the failures of the round.  The other
+lines are cyan.  The colour is dropped when the output is not a terminal.
+
+The model list comes from every models/**/*.py.  The paths are overridable by
 environment, as in the other tools: MODELS_DIR WATCH_DIR
 """
 
@@ -25,6 +33,7 @@ import sys
 import time
 from pathlib import Path
 
+import click
 import render
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -32,12 +41,6 @@ ROOT = Path(__file__).resolve().parent.parent
 POLL_SECONDS = 0.5  # how often the mtimes are read
 DEBOUNCE_SECONDS = 0.5  # a quiet window this long closes a batch of changes
 PLATE = "all"  # models/all.py: the print plate, which holds every part
-
-USAGE = """usage: watch.py
-
-Renders every model under models/*.py, PNG only, into build/watch/ (WATCH_DIR),
-then re-renders a model when its source changes and every model when lib/ or
-constants/ changes.  Ctrl-C stops it."""
 
 
 def path_from_env(name, default):
@@ -51,12 +54,17 @@ def path_from_env(name, default):
 
 def watch_paths(models_dir):
     """The model files, and the shared inputs whose change re-renders every model."""
-    files = sorted(models_dir.glob("*.py"))
-    model_files = [path for path in files if path.stem != "__init__"]
-    shared = [path for path in files if path.stem == "__init__"]
+    files = sorted(models_dir.rglob("*.py"))
+    model_files = [path for path in files if path.name != "__init__.py"]
+    shared = [path for path in files if path.name == "__init__.py"]
     shared += sorted((ROOT / "lib").glob("*.py"))
-    shared += sorted((ROOT / "constants").glob("*.py"))
+    shared.append(ROOT / "config.toml")
     return model_files, shared
+
+
+def model_name(path, models_dir):
+    """A model's name: its path under the models directory, as dev/print_tests."""
+    return path.relative_to(models_dir).with_suffix("").as_posix()
 
 
 def snapshot(paths):
@@ -76,33 +84,68 @@ def changed(before, after):
     return {path for path in names if before.get(path) != after.get(path)}
 
 
-def targets_for(bumped, model_files, shared):
+def targets_for(bumped, model_files, shared, models_dir):
     """The models one batch of changes re-renders, sorted, without duplicates."""
-    names = sorted(path.stem for path in model_files)
+    names = sorted(model_name(path, models_dir) for path in model_files)
     if bumped & set(shared):
         return names
+    by_path = {path: model_name(path, models_dir) for path in model_files}
     targets = []
     for path in sorted(bumped):
-        if path.stem in names and path.stem not in targets:
-            targets.append(path.stem)
+        name = by_path.get(path)
+        if name and name not in targets:
+            targets.append(name)
     if PLATE in targets:
         return names
     return targets
 
 
-def render_one(name, models_dir, out_dir):
-    """Render one model to a PNG.  Returns True when the image was published."""
-    model = models_dir / f"{name}.py"
-    log = out_dir / "logs" / f"{name}.log"
-    log.parent.mkdir(parents=True, exist_ok=True)
-    status = render.render(model, out_dir, kind="png", quiet=True, log=log)
-    if status == 0:
-        print(f"watch.py: {name} -> {out_dir / f'{name}.png'}", flush=True)
-        return True
-    print(
-        f"watch.py: {name} FAILED, the last good image stays (log: {log})", flush=True
+def say(message, colour=None, err=False):
+    """One prefixed line, written now, in the given colour.
+
+    click.echo drops the colour when the stream is not a terminal.  The flush
+    keeps a long render from holding the line back.
+    """
+    stream = sys.stderr if err else sys.stdout
+    click.echo(
+        click.style(f"watch.py: {message}", fg=colour, bold=colour == "red"),
+        file=stream,
     )
+    stream.flush()
+
+
+def ok(message):
+    """A line that reports a good result, in green."""
+    say(message, colour="green")
+
+
+def bad(message):
+    """A line that reports a problem, in bold red on stderr, so it stands out."""
+    say(message, colour="red", err=True)
+
+
+def render_one(name, models_dir, out_dir):
+    """Render one model to an STL, a PNG and a .scad.  Returns True on success.
+
+    A nested name keeps its directory: dev/print_tests writes build/dev/.
+    """
+    model = models_dir / f"{name}.py"
+    stem = Path(name).name
+    outdir = out_dir / Path(name).parent
+    log = outdir / f"{stem}.log"
+    status = render.render(model, outdir, quiet=True, log=log)
+    if status == 0:
+        ok(f"{name} -> {outdir}/{stem}.{{stl,png,scad}}")
+        return True
+    bad(f"{name} FAILED, the last good files stay (log: {log})")
     return False
+
+
+def render_all(names, models_dir, out_dir):
+    """Render each name in turn, and count the failures in a red closing line."""
+    failed = [name for name in names if not render_one(name, models_dir, out_dir)]
+    if failed:
+        bad(f"{len(failed)} of {len(names)} render(s) FAILED: {', '.join(failed)}")
 
 
 def wait_for_changes(models_dir, stamps):
@@ -133,57 +176,55 @@ def wait_for_changes(models_dir, stamps):
         return model_files, shared, stamps, bumped
 
 
+@click.command()
 def main():
-    for arg in sys.argv[1:]:
-        if arg in ("-h", "--help"):
-            print(USAGE)
-            return 0
-        print(f"watch.py: unknown option '{arg}' (try --help)", file=sys.stderr)
-        return 2
+    """Re-render a model when its source changes.
 
+    Renders every model under models/ as an STL, a PNG and a .scad into build/
+    (WATCH_DIR), a nested model as build/dev/x.png, then re-renders a model when
+    its source changes and every model when lib/ or config.toml changes.  Ctrl-C
+    stops it.
+    """
     models_dir = path_from_env("MODELS_DIR", "models")
-    out_dir = path_from_env("WATCH_DIR", "build/watch")
+    out_dir = path_from_env("WATCH_DIR", "build")
     if not models_dir.is_dir():
-        print(f"watch.py: no models directory {models_dir}", file=sys.stderr)
-        return 1
+        bad(f"no models directory {models_dir}")
+        sys.exit(1)
     model_files, shared = watch_paths(models_dir)
-    names = sorted(path.stem for path in model_files)
+    names = sorted(model_name(path, models_dir) for path in model_files)
     if not names:
-        print(f"watch.py: no models found in {models_dir}", file=sys.stderr)
-        return 1
+        bad(f"no models found in {models_dir}")
+        sys.exit(1)
     out_dir.mkdir(parents=True, exist_ok=True)
-    print(
-        f"watch.py: watching {len(names)} models in {models_dir} and "
-        f"{len(shared)} shared files in lib/ and constants/",
-        flush=True,
+    say(
+        f"watching {len(names)} models in {models_dir} and "
+        f"{len(shared)} shared files (__init__.py, lib/, config.toml)",
+        colour="cyan",
     )
-    print(f"watch.py: PNGs go to {out_dir}", flush=True)
+    say(f"PNGs go to {out_dir}", colour="cyan")
 
     # The stamps come first: a change made while the first round renders is then
     # visible to the loop below and gets a fresh render.
     stamps = snapshot(model_files + shared)
-    for name in names:
-        render_one(name, models_dir, out_dir)
+    render_all(names, models_dir, out_dir)
 
     try:
         while True:
             model_files, shared, stamps, bumped = wait_for_changes(models_dir, stamps)
-            print(
-                f"watch.py: {len(bumped)} changed file(s): "
+            say(
+                f"{len(bumped)} changed file(s): "
                 f"{', '.join(sorted(str(path.relative_to(ROOT)) for path in bumped))}",
-                flush=True,
+                colour="cyan",
             )
-            targets = targets_for(bumped, model_files, shared)
+            targets = targets_for(bumped, model_files, shared, models_dir)
             if not targets:
-                print("watch.py: nothing to re-render", flush=True)
+                say("nothing to re-render", colour="cyan")
                 continue
-            print(f"watch.py: re-rendering {', '.join(targets)}", flush=True)
-            for name in targets:
-                render_one(name, models_dir, out_dir)
+            say(f"re-rendering {', '.join(targets)}", colour="cyan")
+            render_all(targets, models_dir, out_dir)
     except KeyboardInterrupt:
-        print("watch.py: stopped", flush=True)
-        return 0
+        say("stopped", colour="cyan")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

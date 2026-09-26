@@ -19,7 +19,7 @@ delta, and exits non-zero on any of these failures:
     it): inside one toolchain the count is a deterministic function of the
     model.  Inside a 0.5% band, with a note, when the toolchain differs, since
     manifold's triangulation can move between nightlies while the solid does
-    not.  A dropped fn argument moves the octi clip from 15046 to 1646 either
+    not.  A dropped tessellation argument moves the octi clip from 15046 to 1646 either
     way,
   * the mesh has open edges (a torn surface; the STL would slice badly),
   * a baseline exists with no matching model.
@@ -28,18 +28,18 @@ delta, and exits non-zero on any of these failures:
 writes no baseline for a model whose render failed, so a broken tree cannot
 freeze one, and the run still reports the failure.
 
-The paths are overridable by environment, which the Makefile uses and which lets
-the harness be pointed at a scratch copy:
-  MODELS_DIR BASELINE_DIR STL_DIR IMG_DIR WORK
+The paths are overridable by environment, which lets the harness be pointed at a
+scratch copy:
+  MODELS_DIR BASELINE_DIR OUT_DIR
 """
 import importlib
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import click
 import png_check
 import render
 import stl_metrics
@@ -50,22 +50,17 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-USAGE = """usage: verify.py [--save]
-
-Renders every model at its own default fn=100 through tools/render.py and
-compares its metrics against tools/baseline/*.json.  --save writes those files
-in place of the comparison.  A missing model, a failed render, a moved metric,
-a torn mesh, and a baseline with no matching model all fail the run."""
+from lib.config import CONFIG
 
 VOL_TOL_PCT = 0.05      # relative
 BBOX_TOL_MM = 0.01
 TRI_TOL_PCT = 0.5       # band for a toolchain other than the baseline's; a real
                         # tessellation regression moves the count by far more
-                        # (a dropped fn argument moves this model from 15046 to 1646)
+                        # (a dropped tessellation argument moves this model from 15046 to 1646)
 FIELDS = ("bbox_min", "bbox_max")
 # The tessellation the frozen baselines were recorded at: the harness renders
-# every model at the full fn, never at the draft one.
-MODEL_FN = 100
+# every model at the value in `[library] tessellation_resolution`.
+MODEL_TESSELLATION = CONFIG.library.tessellation_resolution
 # png_check.py's own default frame, used for the ASCII preview of a bad plate.
 PNG_COLS = 78
 PNG_ROWS = 30
@@ -95,7 +90,7 @@ def source_commit():
     return result.stdout.strip() or "unknown"
 
 
-def save_baselines(metrics, baseline_dir, status, log_dir):
+def save_baselines(metrics, baseline_dir, status, out_dir):
     """Write one baseline JSON per model.  Returns the number of models that failed.
 
     A model whose render failed has no fresh metrics, so it gets no baseline: the
@@ -109,12 +104,12 @@ def save_baselines(metrics, baseline_dir, status, log_dir):
     for name in sorted(metrics):
         if status[name]["stl"] != "ok" or "error" in metrics[name] or status[name]["png"] != "ok":
             print(f"verify.py: {name}: no baseline written, the render failed "
-                  f"(see {log_dir}/{name}.log)", file=sys.stderr)
+                  f"(see {out_dir}/{name}.log)", file=sys.stderr)
             failed += 1
             continue
         record = dict(metrics[name])
         record["file"] = f"{name}.stl"
-        record.update({"fn": MODEL_FN, "openscad_version": version, "source_commit": commit})
+        record.update({"tessellation": MODEL_TESSELLATION, "openscad_version": version, "source_commit": commit})
         path = baseline_dir / f"{name}.json"
         path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
         print(f"verify.py: saved {path}: {record['volume_mm3']} mm3, "
@@ -132,7 +127,7 @@ def cell(value, width, places):
     return "-".rjust(width) if value is None else f"{value:>{width}.{places}f}"
 
 
-def compare(status, metrics, baselines, version, log_dir):
+def compare(status, metrics, baselines, version, out_dir):
     """Print the pass/fail table.  Returns the number of models that failed."""
     rows = []
     notes = []
@@ -146,7 +141,7 @@ def compare(status, metrics, baselines, version, log_dir):
         if name not in status:
             reasons.append("model missing (baseline exists)")
         if st["stl"] != "ok":
-            reasons.append(f"render failed (see {log_dir}/{name}.log)")
+            reasons.append(f"render failed (see {out_dir}/{name}.log)")
         if st["png"] != "ok":
             reasons.append("screenshot failed")
 
@@ -260,87 +255,73 @@ def expected_regions(name):
     return want
 
 
-def show_failed_screenshots(status, img_dir):
+def show_failed_screenshots(status, out_dir):
     """Re-check each failed plate with the ASCII preview, to say what went wrong."""
     for name, state in status.items():
         if state["png"] == "ok":
             continue
         want = expected_regions(name)
-        png_check.check(str(img_dir / f"{name}.png"), PNG_COLS, PNG_ROWS, False, want)
+        png_check.check(str(out_dir / f"{name}.png"), PNG_COLS, PNG_ROWS, False, want)
 
 
-def main():
-    save = False
-    for arg in sys.argv[1:]:
-        if arg == "--save":
-            save = True
-        elif arg in ("-h", "--help"):
-            print(USAGE)
-            return 0
-        else:
-            print(f"verify.py: unknown option '{arg}' (try --help)", file=sys.stderr)
-            return 2
+@click.command()
+@click.option("--save", is_flag=True,
+              help="Render all and write the baselines instead of comparing.")
+def main(save):
+    """Render every model and compare it against the frozen baselines.
+
+    The models come from models/*.py, and each is rendered at the `[library]
+    tessellation_resolution` from lib/config.py through tools/render.py.  --save
+    writes tools/baseline/*.json in place of the comparison.  A missing model, a
+    failed render, a moved metric, a torn mesh, and a baseline with no matching
+    model all fail the run.
+    """
     models_dir = path_from_env("MODELS_DIR", "models")
     baseline_dir = path_from_env("BASELINE_DIR", "tools/baseline")
-    stl_dir = path_from_env("STL_DIR", "build/stl")
-    img_dir = path_from_env("IMG_DIR", "docs/images")
-    # Each run gets its own scratch directory for the render logs: two runs of
-    # `make check-baseline` at the same time (which happens on a team) otherwise
-    # write the same build/logs/<model>.log.
-    work = path_from_env("WORK", "build/verify")
-    work = work.parent / f"{work.name}.{os.getpid()}"
-    log_dir = work / "logs"
+    out_dir = path_from_env("OUT_DIR", "build")
 
     version = render.openscad_version()
-    log_dir.mkdir(parents=True, exist_ok=True)
-    stl_dir.mkdir(parents=True, exist_ok=True)
-    img_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     models = find_models(models_dir)
     if not models:
         print(f"verify.py: no models found in {models_dir}", file=sys.stderr)
-        return 1
+        sys.exit(1)
     print(f"verify.py: {len(models)} models from {models_dir}", flush=True)
 
     status = {}
     metrics = {}
-    try:
-        for name in models:
-            model = models_dir / f"{name}.py"
-            log = log_dir / f"{name}.log"
-            stl_status = "FAIL"
-            png_status = "FAIL"
+    for name in models:
+        model = models_dir / f"{name}.py"
+        # render.py publishes an STL only after its own checks and a plate only
+        # after png_check, so drop the old files first: what is on disk when the
+        # render returns is exactly what passed.
+        for suffix in (".stl", ".png"):
+            (out_dir / f"{name}{suffix}").unlink(missing_ok=True)
+        render.render(model, out_dir, quiet=True)
 
-            if render.render(model, stl_dir, kind="stl", quiet=True, log=log) == 0:
-                stl_status = "ok"
+        stl_status = "ok" if (out_dir / f"{name}.stl").is_file() else "FAIL"
+        png_status = "ok" if (out_dir / f"{name}.png").is_file() else "FAIL"
 
-            if (stl_dir / f"{name}.stl").is_file():
-                metrics[name] = stl_metrics.metrics(str(stl_dir / f"{name}.stl"))
-                if "error" in metrics[name]:
-                    stl_status = "FAIL"
-            else:
+        if stl_status == "ok":
+            metrics[name] = stl_metrics.metrics(str(out_dir / f"{name}.stl"))
+            if "error" in metrics[name]:
                 stl_status = "FAIL"
 
-            if render.render(model, img_dir, kind="png", quiet=True, log=log) == 0:
-                png_status = "ok"
+        status[name] = {"stl": stl_status, "png": png_status}
 
-            status[name] = {"stl": stl_status, "png": png_status}
-
-        if save:
-            failures = save_baselines(metrics, baseline_dir, status, log_dir)
-        else:
-            baselines = {path.stem: json.loads(path.read_text())
-                         for path in sorted(baseline_dir.glob("*.json"))}
-            failures = compare(status, metrics, baselines, version, log_dir)
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
+    if save:
+        failures = save_baselines(metrics, baseline_dir, status, out_dir)
+    else:
+        baselines = {path.stem: json.loads(path.read_text())
+                     for path in sorted(baseline_dir.glob("*.json"))}
+        failures = compare(status, metrics, baselines, version, out_dir)
 
     if failures:
         if not save:
-            show_failed_screenshots(status, img_dir)
-        return 1
-    return 0
+            show_failed_screenshots(status, out_dir)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

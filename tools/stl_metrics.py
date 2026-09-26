@@ -8,6 +8,7 @@ import json
 import struct
 import sys
 
+import click
 import numpy as np
 
 
@@ -69,7 +70,7 @@ def metrics(path):
     _, counts = np.unique(canonical_edges(t), axis=0, return_counts=True)
     return {
         "file": path,
-        "triangles": int(len(t)),
+        "triangles": len(t),
         "volume_mm3": round(vol, 3),
         "bbox_min": [round(float(x), 3) for x in lo],
         "bbox_max": [round(float(x), 3) for x in hi],
@@ -79,14 +80,22 @@ def metrics(path):
     }
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("usage: stl_metrics.py file.stl [...]", file=sys.stderr)
-        sys.exit(2)
+@click.command()
+@click.argument("files", nargs=-1, required=True)
+def main(files):
+    """Print one JSON object per STL file on stdout.
+
+    A file that cannot be read prints an object with an "error" key and fails
+    the run.
+    """
     status = 0
-    for p in sys.argv[1:]:
-        m = metrics(p)
-        print(json.dumps(m, sort_keys=True))
-        if "error" in m:
+    for path in files:
+        stats = metrics(path)
+        click.echo(json.dumps(stats, sort_keys=True))
+        if "error" in stats:
             status = 1
     sys.exit(status)
+
+
+if __name__ == "__main__":
+    main()

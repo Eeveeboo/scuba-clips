@@ -8,11 +8,11 @@ the delivered plates read consistently tight without touching the camera.
 The crop is idempotent: a second run finds the ink at the margin and keeps the
 image as it is.
 
-Usage: trim_png.py image.png [...] [--margin 45] [--dry-run]
+Usage: trim_png.py image.png [...] [--margin MARGIN] [--dry-run]
 """
-import argparse
 import sys
 
+import click
 import numpy as np
 from PIL import Image
 
@@ -44,19 +44,28 @@ def trim(path, margin, dry_run):
     return True
 
 
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("images", nargs="+")
-    ap.add_argument("--margin", type=int, default=40, help="pixels of background kept on each side")
-    ap.add_argument("--dry-run", action="store_true", help="report the crop, keep the file")
-    a = ap.parse_args()
-    if a.margin < 0:
-        ap.error("--margin must not be negative")
+@click.command()
+@click.argument("images", nargs=-1, required=True)
+@click.option("--margin", type=int, default=40, show_default=True,
+              help="Pixels of background kept on each side.")
+@click.option("--dry-run", is_flag=True, help="Report the crop, keep the file.")
+def main(images, margin, dry_run):
+    """Trim each PNG to the geometry it shows, with a margin, in place.
+
+    The crop is idempotent: a second run finds the ink at the margin and keeps
+    the image as it is.
+    """
+    if margin < 0:
+        raise click.UsageError("--margin must not be negative")
     ok = True
-    for p in a.images:
+    for path in images:
         try:
-            ok = trim(p, a.margin, a.dry_run) and ok
+            ok = trim(path, margin, dry_run) and ok
         except (OSError, ValueError) as exc:
-            print(f"trim_png.py: {p}: cannot read image: {exc}")
+            click.echo(f"trim_png.py: {path}: cannot read image: {exc}")
             ok = False
     sys.exit(0 if ok else 1)
+
+
+if __name__ == "__main__":
+    main()

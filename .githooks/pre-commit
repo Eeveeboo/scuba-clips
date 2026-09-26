@@ -1,0 +1,6 @@
+#!/bin/sh
+# Refuse a commit that fails ruff or ty.  Enable the hook path with:
+#   git config core.hooksPath .githooks
+set -e
+make lint
+make typecheck

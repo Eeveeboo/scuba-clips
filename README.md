@@ -1,85 +1,59 @@
-# scuba-clips
+# Scuba Clips 🤿
 
-Parametric scuba hose clips, built from Python with `solidpython2`: an
-inflator/SPG combo clip, an upper octopus retaining clip for shoulder webbing,
-and a webbing side clip with two standoffs.
+Parametric (customizable) clips for scuba gear. The default parameters are for my personal kit: an [OMS Lite CB Wing BCD](https://omsdirect.com/Lite-XS-Performance-Mono-27-lbs-12.5-kg-Black/S11518023) and the [Ocea XL4 regulators](https://www.apeksdiving.com/en-us/product/xl4-ocea-stage-3-dive-regulator-octopus-726024?color=6225).
 
-![All three parts](docs/images/all.png)
+## So... what does this project generate exactly?
 
-| Combo | Upper octopus | Webbing side |
-| --- | --- | --- |
-| ![combo](docs/images/inflator_spg_combo_clip.png) | ![upper](docs/images/upper_octi_retaining_clip.png) | ![webbing](docs/images/webbing_side_clip.png) |
+### Inflator Tube + SPG + LPI hose clip
+I'm tiny so I can comfortably view the side of my BCD Inflator controls, so I thought "why not combine them and be more streamlined?" and that's how this whole project started 😅 This clip routes the three hoses on my left together so my SPG is on the inner "flat" face of my inflator, and currently then hair elastic'd to the side (I'll make another custom print to replace that as well soon.)
 
-## Use the nightly build, with the manifold solver
+||
+|-|
+|![](.readme_images/inflator_spg_combo_clip.png)|
 
-Use a **nightly** OpenSCAD and always pass `--backend=manifold`. The 2021.01
-release has no `--backend` option, so it cannot use manifold, and the legacy CGAL
-solver is painfully slow: on the same part, manifold renders the upper clip in
-**1.0 s** where CGAL takes **3 min 04 s**. `make` refuses pre-2024 builds.
+### Octi/Alternate clips
+I just didn't like how either dangly or inaccessible all the ways I had been shown to store my alternate were (I only dive back-mount singles currently, and yes since designing these I have been told about long lose and intend to try it out soon 💖)
 
-## Build
+|Upper|Lower|
+|-|-|
+|![](.readme_images/upper_octi_retaining_clip.png)|![](.readme_images/lower_octi_retaining_clip.png)|
 
-The build is Python. `solidpython2` writes the OpenSCAD source, and OpenSCAD
-renders it with the manifold solver. `uv` builds the environment from
-`pyproject.toml` and `uv.lock`; a new machine needs `uv` and OpenSCAD only.
+### Inflator tube clip
+Is this overkill to replace the velcro? Maybe, but I didn't like it, so I replaced it 🤷‍♀️ It also prevents the slippage where I feel like I always have to yank the inflator forward before descending in the velcro since it slipped back.
+
+||
+|-|
+|![](.readme_images/upper_inflator_retaining_clip.png)|
+
+
+## So... how do I build the models myself? 🤩
+
+### Prerequisites 🔧
+
+* make (`sudo apt install make` / `xcode-select --install` / `choco install make`)
+* OpenSCAD 2024 or newer (nightly): <https://openscad.org/downloads.html>.
+* uv: <https://docs.astral.sh/uv/getting-started/installation/>.
+
+> ⚠️ *I've only tested this on MacOS, feel free to make a PR to fix any issues you run into 💖*
+
+### Configuration ⚙️
+
+Copy `config.example.toml` to `config.toml` and update the measurements to match your own kit's spacing, diameters and webbing configuration.
+
+### Generate the clips ✨
 
 ```sh
-uv sync              # once: the build environment into .venv
-make                 # list targets
-make all             # STL + screenshot per model (stl + png)
-make stl             # STLs only
-make png             # screenshots only, into docs/images/
-make scad            # generated OpenSCAD source into build/scad/
-make watch           # re-render on a source change, into build/watch/
-make one MODEL=x     # one model, STL and screenshot
-make preview         # fast draft build at fn=36, into build/draft/
-make typecheck       # uv run ty check
-make lint            # uv run ruff check
-make format          # uv run ruff format
-make check-baseline  # compare volume, bbox and mesh against tools/baseline/
-make save-baseline   # render all and write tools/baseline/
-make clean
+make all # Makes everything once
+# or
+make watch # Watches for file changes and rebuilds
 ```
 
-Render one model directly, or with another binary:
+Once that completes you should have a bunch of files in the `build/` folder. Grab the STLs and print away! I recommend PETG + 100% infill from my testing 💖
+
+### Troubleshooting 😭
+
+If the generator cannot find OpenSCAD give the full path to the program:
 
 ```sh
-uv run tools/render.py models/upper_octi_retaining_clip.py build/stl
-uv run tools/render.py models/upper_octi_retaining_clip.py build/stl --stl --draft
-make OPENSCAD=/path/to/OpenSCAD stl
+make OPENSCAD=/path/to/OpenSCAD/binary [target]
 ```
-
-## Layout
-
-`constants/hardware.py` your hoses and your webbing — the first thing to tune
-· `models/` one part per file: its builder, its tuning variables, and its plate
-expectation, `all.py` the full plate · `lib/` reusable geometry builders, rarely
-edited · `dev/print_tests.py` fit coupons, print these first ·
-`docs/CONVENTIONS.md` conventions · `tools/` the build and regression harness.
-
-## How a model is built
-
-Each `models/<name>.py` defines `<name>(fn: int = MODEL_FN)`. The builder takes
-`fn` and passes it to every primitive that tessellates, so a draft render at
-`fn=36` is fast and a full render uses `MODEL_FN = 100`. Each model states its
-plate expectation as `EXPECTED_REGIONS`. Importing a model builds nothing; only
-a call to the builder makes geometry.
-
-## Tuning
-
-First set your kit. `constants/hardware.py` holds each hose diameter as
-`hose_*_dia` and each webbing size as `webbing_*_size` (`[width, thickness]`),
-in plain assignments that every model reads.
-
-Then tune a part in its own model file, in the variables at the top:
-
-| Model | Knobs |
-| --- | --- |
-| `inflator_spg_combo_clip` | `t_inner`, `t_outer`, `w_gap`, `clip_h`, and the outer clips' placement (`hp_spg_*`, `lpi_*`) |
-| `upper_octi_retaining_clip` | `clip_bottom_z`, `reg_clip_h`, `reg_clip_standoff`, `hose_clip_h`, `hose_clip_standoff`, `strap_block_h`, `webbing_slot_h`, the `slit_*` numbers, `offset` |
-| `webbing_side_clip` | `wall_t`, `block_h`, `clip_h`, `gap`, `tube_d` |
-| `all` | none — the print plate places the three parts, and each part reads its own knobs |
-
-`lib/` holds the geometry builders and their fit defaults. Leave it alone
-unless you are changing a builder itself. In `webbing_side_clip`, `wall_t`
-drives the block wall and the walls of its `hose_clip_on_standoff` clips.

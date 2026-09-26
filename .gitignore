@@ -4,4 +4,7 @@ build/
 .venv/
 .DS_Store
 __pycache__/
+.ruff_cache/
 *.pyc
+# The local kit overrides.  config.example.toml is committed; config.toml is not.
+config.toml

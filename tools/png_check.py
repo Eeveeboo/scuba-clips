@@ -12,10 +12,10 @@ camera splits a part into silhouettes is a judgement call, so it is worth
 reporting and not worth blocking an otherwise good render over.  A plate that
 should show three parts but resolves into two has hidden one of them.
 """
-import argparse
 import os
 import sys
 
+import click
 import numpy as np
 from PIL import Image
 
@@ -113,15 +113,26 @@ def check(path, width, height, quiet, want_components=None):
     return not problems
 
 
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("images", nargs="+")
-    ap.add_argument("--cols", type=int, default=78)
-    ap.add_argument("--rows", type=int, default=30)
-    ap.add_argument("--quiet", action="store_true", help="print the summary line only")
-    ap.add_argument("--components", type=int, default=None,
-                    help="warn unless the image shows exactly this many separate pieces of geometry")
-    a = ap.parse_args()
-    want = a.components
-    ok = all([check(p, a.cols, a.rows, a.quiet, want) for p in a.images])
+@click.command()
+@click.argument("images", nargs=-1, required=True)
+@click.option("--cols", type=int, default=78, show_default=True,
+              help="Columns in the ASCII preview and the edge test.")
+@click.option("--rows", type=int, default=30, show_default=True,
+              help="Rows in the ASCII preview and the edge test.")
+@click.option("--quiet", is_flag=True, help="Print the summary line only.")
+@click.option("--components", type=int, metavar="N", default=None,
+              help="Warn unless the image shows exactly N separate pieces of geometry.")
+def main(images, cols, rows, quiet, components):
+    """Report the size, ink fraction and regions of one or more rendered PNGs.
+
+    Exits 1 when an image is unreadable, blank, or clipped at the frame edge.  A
+    region count that does not match --components is a warning instead.
+    """
+    ok = True
+    for path in images:
+        ok = check(path, cols, rows, quiet, components) and ok
     sys.exit(0 if ok else 1)
+
+
+if __name__ == "__main__":
+    main()
