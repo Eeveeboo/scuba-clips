@@ -15,21 +15,18 @@ and the 3D preview.
   `solid2.scad_render(build())`. A module lock serialises generation.
 - `api/support/service.py` — the schema and SCAD answers as `Response` values,
   plus the query parsing. It holds no socket code.
-- `api/support/dev_server.py` — the local server. Run it with
-  `uv run python -m api.support.dev_server`. It serves `/api/schema`,
-  `/api/scad`, and the static files in the repository's `public/` when that
-  folder exists.
-- `api/schema.py`, `api/scad.py` — the Vercel Python entry points. Each holds
-  only the HTTP plumbing and calls `api.support.service`.
-- `vercel.json` — the deploy config. It sets the "Other" framework preset,
+- `main.py` — the single Flask entrypoint at the repository root. It holds only
+  the HTTP plumbing and calls `api.support.service`. Run it locally with
+  `uv run flask --app main run`. It serves `/api/schema`, `/api/scad`, and the
+  static files in the repository's `public/`.
+- `vercel.json` — the deploy config. It sets the "Flask" framework preset,
   excludes development folders and `public/` from the function bundle with
   `functions.excludeFiles`, and sets a long cache lifetime for `/vendor/*`.
   Vercel installs the dependencies from `pyproject.toml` and `uv.lock` with uv,
   so no `requirements.txt` is needed.
 
-The helper modules must not define `app`, `application`, or `handler`: Vercel
-routes every `api/**/*.py` file that exports one of those names. Only the two
-entry points define `handler`.
+The helper modules must not define `app`, `application`, or `handler`: the root
+`main.py` is the single entrypoint, and Vercel deploys it as the Flask app.
 
 ## Updating the vendored OpenSCAD WASM
 

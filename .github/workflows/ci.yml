@@ -20,5 +20,5 @@ jobs:
       - run: uv run cli lint
       - run: uv run cli typecheck
       - run: uv run cli check-config-example
-      - run: uv run ruff check api tests
+      - run: uv run ruff check api tests main.py
       - run: uv run pytest

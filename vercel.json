@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
+  "framework": "flask",
   "headers": [
     {
       "source": "/vendor/(.*)",
@@ -13,7 +13,7 @@
     }
   ],
   "functions": {
-    "api/*.py": {
+    "main.py": {
       "excludeFiles": "{.git/**,.github/**,.githooks/**,.gitignore,.venv/**,build/**,.readme_images/**,tests/**,tools/**,models/dev/**,public/**,.pytest_cache/**,.ruff_cache/**,**/__pycache__/**}"
     }
   }

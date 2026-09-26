@@ -56,10 +56,10 @@ The web editor is a page that builds a clip in the browser. You set the clip val
 Run it locally with one command:
 
 ```sh
-uv run python -m api.support.dev_server
+uv run flask --app main run
 ```
 
-The command prints the address, for example `http://127.0.0.1:8000`. Open that address in your browser.
+The command prints the address, for example `http://127.0.0.1:5000`. Open that address in your browser.
 
 The editor reads the fields from `lib/config.py` when the page loads. A new field in a config dataclass appears in the editor with no web change.
 
@@ -73,11 +73,11 @@ The owner does these steps one time in the Vercel dashboard, because no Vercel p
 
 1. Create a Vercel account at <https://vercel.com/signup>.
 2. Import this GitHub repository at <https://vercel.com/new>.
-3. In the import form, choose "Other" as the Framework Preset.
+3. In the import form, choose "Flask" as the Framework Preset.
 4. Set the Root Directory to the repository root.
 5. Click **Deploy**, and confirm that no environment variables are needed. No secrets are required.
 
-Vercel installs the Python dependencies with uv, the default package manager for Python builds. Vercel reads `pyproject.toml` and `uv.lock`, so no `requirements.txt` is needed. The Root Directory holds `lib/` and `models/`, so those folders are bundled with the functions. `vercel.json` sets the "Other" preset, keeps the function bundle small, and gives the vendored assets in `public/vendor/` a long cache lifetime.
+Vercel installs the Python dependencies with uv, the default package manager for Python builds. Vercel reads `pyproject.toml` and `uv.lock`, so no `requirements.txt` is needed. The Root Directory holds `lib/` and `models/`, so those folders are bundled with the functions. `vercel.json` sets the "Flask" preset, keeps the function bundle small, and gives the vendored assets in `public/vendor/` a long cache lifetime.
 
 ### Troubleshooting 😭
 
