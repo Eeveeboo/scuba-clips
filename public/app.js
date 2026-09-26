@@ -120,6 +120,7 @@ function showDownload(stl) {
   downloadUrl = URL.createObjectURL(new Blob([stl], { type: "model/stl" }));
   download.href = downloadUrl;
   result.hidden = false;
+  preview.resize();
 }
 
 async function generate(event) {

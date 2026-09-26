@@ -68,5 +68,5 @@ export function createPreview(container) {
     controls.update();
   }
 
-  return { show };
+  return { show, resize };
 }
