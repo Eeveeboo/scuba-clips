@@ -11,6 +11,8 @@ Run it locally with:
 
 from __future__ import annotations
 
+from urllib.parse import parse_qs
+
 from flask import Flask, Response, request
 
 from api.support.service import Response as ServiceResponse
@@ -35,7 +37,8 @@ def schema() -> Response:
 @app.get("/api/scad")
 def scad() -> Response:
     """The SCAD source for one model request."""
-    return _answer(scad_response(request.args.to_dict(flat=False)))
+    query = parse_qs(request.query_string.decode("utf-8"))
+    return _answer(scad_response(query))
 
 
 @app.get("/")

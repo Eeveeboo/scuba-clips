@@ -60,6 +60,34 @@ def test_scad_route__returns_plain_scad_for_a_model() -> None:
     )
 
 
+def test_scad_route__drops_a_blank_query_pair() -> None:
+    """A user clears a form field, so the client sends the key with a blank value.
+
+    The answer must be the same 200 source as when the key is absent, because
+    the field takes its default. An empty `model=` must answer 400 `missing
+    model`, because a blank pair does not hold a value.
+
+    If this test fails, then a blank query pair reached the service, and a
+    cleared field changed the clip or the error message.
+    """
+    client = app.test_client()
+    default = client.get(f"/api/scad?model={MODEL}")
+    blank = client.get(f"/api/scad?model={MODEL}&hardware.webbing_shoulder_size=")
+    assert blank.status_code == 200, (
+        "Expected a blank field value to answer 200."
+    )
+    assert blank.get_data() == default.get_data(), (
+        "Expected a blank field value to use the field default."
+    )
+    missing = client.get("/api/scad?model=")
+    assert missing.status_code == 400, (
+        "Expected an empty model to answer 400."
+    )
+    assert "missing model" in missing.get_data(as_text=True), (
+        "Expected an empty model to report the missing model."
+    )
+
+
 def test_scad_route__rejects_a_bad_value() -> None:
     """A user edits the URL and types a word where the field wants a number.
 
