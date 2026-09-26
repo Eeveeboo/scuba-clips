@@ -43,6 +43,7 @@ def test_scad_response__rejects_an_unknown_model_field_or_value() -> None:
     ]
     for query, fragment in cases:
         response = scad_response(query)
+        assert isinstance(response.body, str), "Expected a text error body."
         assert response.status == 400, (
             f"Expected a bad request {query!r} to answer 400, got {response.status}."
         )
@@ -67,6 +68,7 @@ def test_schema_response__lists_the_models_and_fields_as_json() -> None:
     assert response.content_type.startswith("application/json"), (
         "Expected the schema to answer as JSON."
     )
+    assert isinstance(response.body, str), "Expected a text schema body."
     assert '"models"' in response.body and '"sections"' in response.body, (
         "Expected the schema body to hold the models and the sections."
     )

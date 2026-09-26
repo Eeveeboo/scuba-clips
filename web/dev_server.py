@@ -38,7 +38,7 @@ def _static_response(url_path: str) -> Response:
     if PUBLIC_DIR.resolve() not in candidate.parents or not candidate.is_file():
         return _not_found()
     content_type, _ = mimetypes.guess_type(candidate.name)
-    body = candidate.read_bytes().decode("utf-8", errors="replace")
+    body = candidate.read_bytes()
     return Response(
         status=200, content_type=content_type or "application/octet-stream", body=body
     )
@@ -55,7 +55,8 @@ class Handler(BaseHTTPRequestHandler):
             response = scad_response(parse_qs(parsed.query))
         else:
             response = _static_response(parsed.path)
-        encoded = response.body.encode("utf-8")
+        body = response.body
+        encoded = body.encode("utf-8") if isinstance(body, str) else body
         self.send_response(response.status)
         self.send_header("Content-Type", response.content_type)
         self.send_header("Content-Length", str(len(encoded)))

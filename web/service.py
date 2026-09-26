@@ -20,11 +20,11 @@ JSON = "application/json; charset=utf-8"
 
 @dataclass(frozen=True)
 class Response:
-    """One HTTP answer: status, content type and body text."""
+    """One HTTP answer: status, content type and body text or bytes."""
 
     status: int
     content_type: str
-    body: str
+    body: str | bytes
 
 
 def _error(message: str) -> Response:

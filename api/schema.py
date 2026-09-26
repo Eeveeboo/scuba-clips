@@ -28,9 +28,10 @@ class handler(BaseHTTPRequestHandler):
 
 def _write(request: BaseHTTPRequestHandler, response: Response) -> None:
     """Write one `Response` to the open request."""
-    body = response.body.encode("utf-8")
+    body = response.body
+    encoded = body.encode("utf-8") if isinstance(body, str) else body
     request.send_response(response.status)
     request.send_header("Content-Type", response.content_type)
-    request.send_header("Content-Length", str(len(body)))
+    request.send_header("Content-Length", str(len(encoded)))
     request.end_headers()
-    request.wfile.write(body)
+    request.wfile.write(encoded)
