@@ -28,6 +28,29 @@ and the 3D preview.
 The helper modules must not define `app`, `application`, or `handler`: the root
 `main.py` is the single entrypoint, and Vercel deploys it as the Flask app.
 
+## Deploy
+
+The deploy is set-and-forget. Connect the GitHub repository to Vercel one
+time. After that, each merge to `main` deploys to production, and each pull
+request gets its own preview deploy.
+
+The owner does these steps one time in the Vercel dashboard, because no Vercel
+project exists yet:
+
+1. Create a Vercel account at <https://vercel.com/signup>.
+2. Import this GitHub repository at <https://vercel.com/new>.
+3. In the import form, choose "Flask" as the Framework Preset.
+4. Set the Root Directory to the repository root.
+5. Click **Deploy**, and confirm that no environment variables are needed. No
+   secrets are required.
+
+Vercel installs the Python dependencies with uv, the default package manager
+for Python builds. Vercel reads `pyproject.toml` and `uv.lock`, so no
+`requirements.txt` is needed. The Root Directory holds `lib/` and `models/`, so
+those folders are bundled with the functions. `vercel.json` sets the "Flask"
+preset, keeps the function bundle small, and gives the vendored assets in
+`public/vendor/` a long cache lifetime.
+
 ## Updating the vendored OpenSCAD WASM
 
 The client vendors the OpenSCAD WASM build under `public/vendor/openscad/`.
