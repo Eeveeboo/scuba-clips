@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
+from api.support.generator import render_scad
 from lib.config import Config, build_config, hose_clip_total_diameter, set_config
-from web.generator import render_scad
 
 MODEL = "upper_inflator_retaining_clip"
 

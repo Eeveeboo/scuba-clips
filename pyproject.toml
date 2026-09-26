@@ -22,7 +22,7 @@ dependencies = [
 cli = "tools.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["lib", "models", "tools", "web"]
+packages = ["api", "lib", "models", "tools"]
 
 [dependency-groups]
 dev = [

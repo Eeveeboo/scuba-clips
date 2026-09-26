@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from web.service import scad_response, schema_response
+from api.support.service import scad_response, schema_response
 
 MODEL = "upper_inflator_retaining_clip"
 

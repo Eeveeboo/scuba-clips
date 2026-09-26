@@ -25,6 +25,16 @@ This file is a notice list, not a copy of the full license text.
 | --- | --- | --- |
 | [hatchling](https://github.com/pypa/hatch) | MIT | https://github.com/pypa/hatch |
 
+## Vendored browser assets
+
+These files are committed under `public/vendor/` and run in the browser. They
+are not installed by uv or npm at build time.
+
+| Package | Version | License | Upstream |
+| --- | --- | --- | --- |
+| [@lofcz/openscad-wasm](https://github.com/lofcz/openscad-wasm) | 0.0.2 | GPL-2.0-only | https://github.com/lofcz/openscad-wasm |
+| [three.js](https://github.com/mrdoob/three.js) | 0.160.0 | MIT | https://github.com/mrdoob/three.js |
+
 ## Transitive dependencies
 
 | Package | Version | License | Upstream |
@@ -33,6 +43,17 @@ This file is a notice list, not a copy of the full license text.
 | [setuptools](https://github.com/pypa/setuptools) | 84.0.0 | MIT | https://github.com/pypa/setuptools |
 
 ## Copyleft notice
+
+### @lofcz/openscad-wasm — GPL-2.0-only
+
+The editor runs the @lofcz/openscad-wasm build in the browser and under Node to
+turn OpenSCAD source into an STL. The build is a compiled OpenSCAD and its
+dependencies (CGAL, FreeType, HarfBuzz, and others). The files stay unchanged in
+`public/vendor/openscad/`, and `public/vendor/openscad/COPYING` holds the full
+license text.
+
+The source is available from the upstream project:
+https://github.com/lofcz/openscad-wasm
 
 ### solidpython2 — LGPL-2.1
 
@@ -53,4 +74,6 @@ https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
   notices for the code that it bundles. See the `LICENSES` directory in the
   numpy source tree.
 - **pillow** uses the MIT-CMU license.
+- **three.js** uses the MIT license. The full license text is in
+  `public/vendor/three/LICENSE`.
 - **ty, ruff, hatchling, setuptools** use the MIT license.

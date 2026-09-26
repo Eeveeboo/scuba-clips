@@ -1,9 +1,10 @@
 """A dependency-free local server for the editor.
 
-It answers `/api/schema` and `/api/scad` through `web.service`, and serves
-`web/public/` as static files when that folder exists. Run it with:
+It answers `/api/schema` and `/api/scad` through `api.support.service`, and
+serves the repository's `public/` as static files when that folder exists. Run
+it with:
 
-    uv run python -m web.dev_server
+    uv run python -m api.support.dev_server
 
 The port comes from `PORT`, default 8000.
 """
@@ -16,9 +17,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
-from web.service import Response, scad_response, schema_response
+from api.support.service import Response, scad_response, schema_response
 
-PUBLIC_DIR = Path(__file__).resolve().parent / "public"
+ROOT = Path(__file__).resolve().parents[2]
+PUBLIC_DIR = ROOT / "public"
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
 
@@ -68,7 +70,7 @@ def main() -> None:
     """Start the server and print its address."""
     port = int(os.environ.get("PORT", DEFAULT_PORT))
     server = ThreadingHTTPServer((HOST, port), Handler)
-    print(f"web.dev_server: http://{HOST}:{server.server_port}")
+    print(f"api.support.dev_server: http://{HOST}:{server.server_port}")
     server.serve_forever()
 
 

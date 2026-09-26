@@ -1,7 +1,7 @@
 """Vercel entry point for `GET /api/schema`.
 
 Vercel runs the `handler` class for the `/api/schema` route. This file holds
-only the HTTP plumbing; `web.service.schema_response` holds the answer.
+only the HTTP plumbing; `api.support.service.schema_response` holds the answer.
 """
 
 from __future__ import annotations
@@ -11,12 +11,12 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
 # Vercel runs this file with the repo root as the working directory but not on
-# sys.path, so add the root before the `web` import.
+# sys.path, so add the root before the `api.support` import.
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from web.service import Response, schema_response
+from api.support.service import Response, schema_response
 
 
 class handler(BaseHTTPRequestHandler):

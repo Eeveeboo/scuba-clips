@@ -1,7 +1,7 @@
 """Vercel entry point for `GET /api/scad`.
 
 Vercel runs the `handler` class for the `/api/scad` route. This file holds only
-the HTTP plumbing; `web.service.scad_response` holds the answer.
+the HTTP plumbing; `api.support.service.scad_response` holds the answer.
 """
 
 from __future__ import annotations
@@ -12,12 +12,12 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 # Vercel runs this file with the repo root as the working directory but not on
-# sys.path, so add the root before the `web` import.
+# sys.path, so add the root before the `api.support` import.
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from web.service import Response, scad_response
+from api.support.service import Response, scad_response
 
 
 class handler(BaseHTTPRequestHandler):

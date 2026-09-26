@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from web import dev_server
+from api.support import dev_server
 
 
 def test_static_response__returns_raw_bytes_for_a_non_utf8_file(

@@ -11,8 +11,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from api.support.generator import render_scad
 from lib.config import config_schema, model_names
-from web.generator import render_scad
 
 TEXT = "text/plain; charset=utf-8"
 JSON = "application/json; charset=utf-8"
