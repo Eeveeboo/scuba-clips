@@ -17,10 +17,12 @@ const DEBOUNCE_MS = 400;
 const form = document.getElementById("form");
 const sections = document.getElementById("sections");
 const statusLine = document.getElementById("status");
-const download = document.getElementById("download");
+const dimensions = document.getElementById("dimensions");
+const downloadStl = document.getElementById("download-stl");
+const downloadScad = document.getElementById("download-scad");
 const preview = createPreview(document.getElementById("preview"));
 
-let downloadUrl = null;
+let downloadUrls = [];
 let changeVersion = 0;
 let rendering = false;
 let debounceTimer = null;
@@ -119,20 +121,39 @@ function updateUrl(params) {
   history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
 }
 
-function showDownload(stl) {
-  if (downloadUrl) {
-    URL.revokeObjectURL(downloadUrl);
+function clearDownloads() {
+  for (const url of downloadUrls) {
+    URL.revokeObjectURL(url);
   }
-  downloadUrl = URL.createObjectURL(new Blob([stl], { type: "model/stl" }));
-  download.href = downloadUrl;
-  download.hidden = false;
-  preview.resize();
+  downloadUrls = [];
+  downloadStl.hidden = true;
+  downloadScad.hidden = true;
+}
+
+// The SCAD text already came with the render, so the second link needs no
+// extra request. The user must not keep the old clip while the URL holds a
+// bad value, so a failed render clears both links.
+function showDownloads(stl, scadText) {
+  clearDownloads();
+  const stlUrl = URL.createObjectURL(new Blob([stl], { type: "model/stl" }));
+  const scadUrl = URL.createObjectURL(new Blob([scadText], { type: "text/plain" }));
+  downloadUrls = [stlUrl, scadUrl];
+  downloadStl.href = stlUrl;
+  downloadScad.href = scadUrl;
+  downloadStl.hidden = false;
+  downloadScad.hidden = false;
+}
+
+function formatSize(size) {
+  return `${size.x.toFixed(1)} x ${size.y.toFixed(1)} x ${size.z.toFixed(1)} mm`;
 }
 
 async function runRender() {
   rendering = true;
   const version = changeVersion;
   const params = collectParams();
+  const modelName = params.get("model");
+  clearDownloads();
   setStatus("Rendering…", false);
   try {
     const response = await fetch(`${API}/scad?${params.toString()}`);
@@ -145,13 +166,15 @@ async function runRender() {
       return;
     }
     const buffer = stl.buffer.slice(stl.byteOffset, stl.byteOffset + stl.byteLength);
-    preview.show(buffer);
-    showDownload(stl);
+    const size = preview.show(buffer, modelName);
+    dimensions.textContent = formatSize(size);
+    showDownloads(stl, scadText);
     setStatus("The clip is ready.", false);
   } catch (error) {
     if (version !== changeVersion) {
       return;
     }
+    dimensions.textContent = "";
     setStatus(error.message, true);
   } finally {
     rendering = false;
