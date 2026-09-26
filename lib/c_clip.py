@@ -10,7 +10,7 @@ Every builder here builds centred on the origin. The caller translates.
 
 from __future__ import annotations
 
-from lib.config import hose_clip_base_diameter, hose_clip_total_diameter
+from lib.config import CONFIG, hose_clip_base_diameter, hose_clip_total_diameter
 from lib.scad import (
     OpenSCADObjectPlus,
     cylinder,
@@ -128,18 +128,16 @@ def hose_clip(
     backbone_wall_thickness: float = 3,
     radial_gap: float = 3,
     tongue_wall_thickness: float = 1.5,
-    tongue_back_angle: float = 60,
-    backbone_front_angle: float = 90,
-    opening_angle_offset: float = 15,
+    tongue_back_angle: float = CONFIG.hardware.tongue_back_angle,
+    backbone_front_angle: float = CONFIG.hardware.backbone_front_angle,
+    opening_angle_offset: float = CONFIG.hardware.opening_angle_offset,
     height: float = 10,
 ) -> OpenSCADObjectPlus:
     """One hose clip, centred on the origin. `tongue_back_angle` is the tongue
     opening at the back (-X), `backbone_front_angle` the backbone opening at the
     front (+X), and `opening_angle_offset` the extra front opening of the tongue
-    and of the relief cut.
-
-    The defaults here differ from the `[library]` config section on purpose:
-    this fit is hand-tuned, so do not unify them."""
+    and of the relief cut. The angle defaults come from the `[hardware]` config
+    section."""
     if not (
         hose_diameter > 0
         and backbone_wall_thickness > 0
@@ -213,9 +211,9 @@ def hose_clip_keepout(
     backbone_wall_thickness: float = 3,
     radial_gap: float = 3,
     tongue_wall_thickness: float = 1.5,
-    tongue_back_angle: float = 60,
-    backbone_front_angle: float = 90,
-    opening_angle_offset: float = 15,
+    tongue_back_angle: float = CONFIG.hardware.tongue_back_angle,
+    backbone_front_angle: float = CONFIG.hardware.backbone_front_angle,
+    opening_angle_offset: float = CONFIG.hardware.opening_angle_offset,
     height: float = 10,
 ) -> OpenSCADObjectPlus:
     """Keep-out volume for one hose clip: the full envelope cylinder plus a front

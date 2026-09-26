@@ -5,8 +5,9 @@ tools/baseline/.
   tools/verify.py            # render all, compare against the baselines
   tools/verify.py --save     # render all, write tools/baseline/<name>.json
 
-The models come from models/*.py: one file per model, and no hand-written list.
-Each model module states its plate expectation as EXPECTED_REGIONS.
+The models come from every .py under models/, at any depth: a dev model such
+as models/dev/print_tests.py is model dev/print_tests.  Each model module states
+its plate expectation as EXPECTED_REGIONS.
 
 Prints a pass/fail table with the relative volume error and the bounding box
 delta, and exits non-zero on any of these failures:
@@ -75,11 +76,6 @@ def path_from_env(name, default):
     return path if path.is_absolute() else ROOT / path
 
 
-def find_models(models_dir):
-    """The model names, from models/*.py.  __init__.py holds the package."""
-    return sorted(path.stem for path in models_dir.glob("*.py") if path.stem != "__init__")
-
-
 def source_commit():
     """The short HEAD hash a baseline is captured from, or 'unknown'."""
     try:
@@ -111,6 +107,7 @@ def save_baselines(metrics, baseline_dir, status, out_dir):
         record["file"] = f"{name}.stl"
         record.update({"tessellation": MODEL_TESSELLATION, "openscad_version": version, "source_commit": commit})
         path = baseline_dir / f"{name}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
         print(f"verify.py: saved {path}: {record['volume_mm3']} mm3, "
               f"{record['triangles']} triangles, {record['open_edges']} open edges")
@@ -243,9 +240,9 @@ def expected_regions(name):
     good render.
     """
     try:
-        module = importlib.import_module(f"models.{name}")
+        module = importlib.import_module(f"models.{name.replace('/', '.')}")
     except ImportError as exc:
-        print(f"verify.py: cannot import models.{name}: {exc}")
+        print(f"verify.py: cannot import models.{name.replace('/', '.')}: {exc}")
         return None
     want = getattr(module, "EXPECTED_REGIONS", None)
     if isinstance(want, bool) or not isinstance(want, int):
@@ -270,7 +267,7 @@ def show_failed_screenshots(status, out_dir):
 def main(save):
     """Render every model and compare it against the frozen baselines.
 
-    The models come from models/*.py, and each is rendered at the `[library]
+    The models come from every .py under models/, and each is rendered at the `[library]
     tessellation_resolution` from lib/config.py through tools/render.py.  --save
     writes tools/baseline/*.json in place of the comparison.  A missing model, a
     failed render, a moved metric, a torn mesh, and a baseline with no matching
@@ -283,7 +280,7 @@ def main(save):
     version = render.openscad_version()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    models = find_models(models_dir)
+    models = render.find_models(models_dir)
     if not models:
         print(f"verify.py: no models found in {models_dir}", file=sys.stderr)
         sys.exit(1)
@@ -293,12 +290,16 @@ def main(save):
     metrics = {}
     for name in models:
         model = models_dir / f"{name}.py"
+        # A nested name keeps its directory: dev/print_tests writes build/dev/.
+        model_out = out_dir / Path(name).parent
+        stem = Path(name).name
         # render.py publishes an STL only after its own checks and a plate only
         # after png_check, so drop the old files first: what is on disk when the
         # render returns is exactly what passed.
         for suffix in (".stl", ".png"):
             (out_dir / f"{name}{suffix}").unlink(missing_ok=True)
-        render.render(model, out_dir, quiet=True)
+        render.render(model, model_out, name=stem, quiet=True,
+                      log=model_out / f"{stem}.log")
 
         stl_status = "ok" if (out_dir / f"{name}.stl").is_file() else "FAIL"
         png_status = "ok" if (out_dir / f"{name}.png").is_file() else "FAIL"
@@ -313,8 +314,8 @@ def main(save):
     if save:
         failures = save_baselines(metrics, baseline_dir, status, out_dir)
     else:
-        baselines = {path.stem: json.loads(path.read_text())
-                     for path in sorted(baseline_dir.glob("*.json"))}
+        baselines = {path.relative_to(baseline_dir).with_suffix("").as_posix(): json.loads(path.read_text())
+                     for path in sorted(baseline_dir.rglob("*.json"))}
         failures = compare(status, metrics, baselines, version, out_dir)
 
     if failures:

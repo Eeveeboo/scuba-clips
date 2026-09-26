@@ -21,6 +21,9 @@ regulator_fitting_diameter = 18.5  # LP hose fitting at the second stage, held b
 regulator_fitting_length = 15.0  # Length of that fitting; the octi clip grips this length.
 regulator_hose_diameter = 12.5  # LP hose, first stage to the second stage.
 side_clip_hose_diameter = 12.5  # LP hose held by the lower octopus retaining clip.
+tongue_back_angle = 60.0  # Tongue opening at the back (closed side) of a hose clip, in degrees.
+backbone_front_angle = 90.0  # Opening at the front (open side) of a hose clip, in degrees.
+opening_angle_offset = 15.0  # Extra front opening angle of the clip and of the relief cut, in degrees.
 webbing_shoulder_size = [50.0, 3.0]  # Shoulder webbing [width, thickness].
 webbing_hip_size = [37.5, 5.0]  # Hip webbing [width, thickness].
 

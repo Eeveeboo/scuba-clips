@@ -168,6 +168,18 @@ def forget_project_modules():
         del sys.modules[key]
 
 
+def find_models(models_dir):
+    """The model names under models_dir, at any depth.
+
+    models/dev/print_tests.py is model "dev/print_tests".  __init__.py holds a
+    package, not a model.
+    """
+    models_dir = Path(models_dir)
+    names = (path.relative_to(models_dir).with_suffix("").as_posix()
+             for path in models_dir.rglob("*.py"))
+    return sorted(name for name in names if Path(name).name != "__init__")
+
+
 def module_name(model):
     """The import path of a model file: models/dev/x.py -> models.dev.x.
 
