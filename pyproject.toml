@@ -30,7 +30,10 @@ dev = [
     "ruff>=0.16.8",
 ]
 
-# The user's global uv config holds packages back for 14 days. These three
-# are newer than that window and are needed now, so exempt them.
+# Hold packages back for 14 days. Keep this in the project config so the
+# lockfile matches on CI, which has no global uv config.
 [tool.uv]
+exclude-newer = "14 days"
+
+# These three are newer than that window and are needed now, so exempt them.
 exclude-newer-package = { solidpython2 = false, ty = false, ruff = false }
