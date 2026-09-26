@@ -45,6 +45,8 @@ Copy `config.example.toml` to `config.toml` and update the measurements to match
 uv run cli make-all # Makes everything once
 # or
 uv run cli watch # Watches for file changes and rebuilds
+# or
+uv run flask --app main run # Starts a web server (the same one as what I host in vercel, to interactively edit the clips)
 ```
 
 Once that completes you should have a bunch of files in the `build/` folder. Grab the STLs and print away! I recommend PETG + 100% infill from my testing 💖
