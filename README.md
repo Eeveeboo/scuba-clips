@@ -1,5 +1,8 @@
 # Scuba Clips 🤿
 
+[![Web Editor](https://img.shields.io/badge/Web_Editor-scuba--clips.vercel.app-blue)](https://scuba-clips.vercel.app/)
+[![MakerWorld](https://img.shields.io/badge/MakerWorld-V‘s_Scuba_Clips_v1-orange)](https://makerworld.com/en/models/3359585-v-s-scuba-clips-v1#profileId-3819649)
+
 Parametric (customizable) clips for scuba gear. The default parameters are for my personal kit: an [OMS Lite CB Wing BCD](https://omsdirect.com/Lite-XS-Performance-Mono-27-lbs-12.5-kg-Black/S11518023) and the [Ocea XL4 regulators](https://www.apeksdiving.com/en-us/product/xl4-ocea-stage-3-dive-regulator-octopus-726024?color=6225).
 
 ## So... what does this project generate exactly?
