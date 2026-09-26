@@ -21,6 +21,11 @@ and the 3D preview.
   folder exists.
 - `api/schema.py`, `api/scad.py` — the Vercel Python entry points. Each holds
   only the HTTP plumbing and calls `api.support.service`.
+- `vercel.json` — the deploy config. It sets the "Other" framework preset,
+  excludes development folders and `public/` from the function bundle with
+  `functions.excludeFiles`, and sets a long cache lifetime for `/vendor/*`.
+  Vercel installs the dependencies from `pyproject.toml` and `uv.lock` with uv,
+  so no `requirements.txt` is needed.
 
 The helper modules must not define `app`, `application`, or `handler`: Vercel
 routes every `api/**/*.py` file that exports one of those names. Only the two

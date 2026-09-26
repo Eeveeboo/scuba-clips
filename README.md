@@ -49,6 +49,36 @@ uv run cli watch # Watches for file changes and rebuilds
 
 Once that completes you should have a bunch of files in the `build/` folder. Grab the STLs and print away! I recommend PETG + 100% infill from my testing 💖
 
+## Web editor 🌐
+
+The web editor is a page that builds a clip in the browser. You set the clip values, the page asks the server for OpenSCAD source, and the browser turns that source into an STL and a 3D preview. Use the download button to save the `.stl`.
+
+Run it locally with one command:
+
+```sh
+uv run python -m api.support.dev_server
+```
+
+The command prints the address, for example `http://127.0.0.1:8000`. Open that address in your browser.
+
+The editor reads the fields from `lib/config.py` when the page loads. A new field in a config dataclass appears in the editor with no web change.
+
+The editor keeps the config in the URL query string. Copy the URL to keep or share your values. The server stores nothing.
+
+### Deploy ☁️
+
+The deploy is set-and-forget. Connect the GitHub repository to Vercel one time. After that, each merge to `main` deploys to production, and each pull request gets its own preview deploy.
+
+The owner does these steps one time in the Vercel dashboard, because no Vercel project exists yet:
+
+1. Create a Vercel account at <https://vercel.com/signup>.
+2. Import this GitHub repository at <https://vercel.com/new>.
+3. In the import form, choose "Other" as the Framework Preset.
+4. Set the Root Directory to the repository root.
+5. Click **Deploy**, and confirm that no environment variables are needed. No secrets are required.
+
+Vercel installs the Python dependencies with uv, the default package manager for Python builds. Vercel reads `pyproject.toml` and `uv.lock`, so no `requirements.txt` is needed. The Root Directory holds `lib/` and `models/`, so those folders are bundled with the functions. `vercel.json` sets the "Other" preset, keeps the function bundle small, and gives the vendored assets in `public/vendor/` a long cache lifetime.
+
 ### Troubleshooting 😭
 
 If the generator cannot find OpenSCAD give the full path to the program:
