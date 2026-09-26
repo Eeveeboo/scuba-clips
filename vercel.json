@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "flask",
+  "headers": [
+    {
+      "source": "/vendor/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "main.py": {
+      "excludeFiles": "{.git/**,.github/**,.githooks/**,.gitignore,.venv/**,build/**,.readme_images/**,tests/**,tools/**,models/dev/**,public/**,.pytest_cache/**,.ruff_cache/**,**/__pycache__/**}"
+    }
+  }
+}

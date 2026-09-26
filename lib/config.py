@@ -271,14 +271,121 @@ def load_config(path: Path | None = None) -> Config:
 CONFIG: Final = load_config()
 
 
+def set_config(config: Config) -> None:
+    """Replace the process-wide `CONFIG`.
+
+    The web server is stateless: it calls this before it builds one model for
+    one request. Every model module reads `CONFIG` at import time, so the caller
+    must also drop the cached `lib.*` and `models.*` modules, as
+    `tools/render.py` does. The module attribute is written through `globals()`,
+    because `Final` forbids a typed reassignment.
+    """
+    globals()["CONFIG"] = config
+
+
+def build_config(values: dict[str, Any]) -> Config:
+    """A validated `Config` from a nested `section -> field -> value` mapping.
+
+    A key the dataclass does not define stops the build, so a bad request cannot
+    pass quietly. `_build` holds the one copy of that rule.
+    """
+    return _build(Config, values, "config")
+
+
+MODELS_DIR: Final = ROOT / "models"
+
+
+def model_names() -> list[str]:
+    """The real clip model names: `all` and everything under `models/dev/` are
+    left out."""
+    names = []
+    for path in sorted(MODELS_DIR.glob("*.py")):
+        if path.stem in {"__init__", "all"}:
+            continue
+        names.append(path.stem)
+    return names
+
+
+def _display_label(name: str) -> str:
+    """A human form of a field or model name: words, sentence case."""
+    words = name.replace("_", " ").strip()
+    if not words:
+        return name
+    return words[0].upper() + words[1:]
+
+
+def _schema_type(annotation: Any) -> str:
+    """The schema type name for one dataclass field annotation."""
+    if annotation is int:
+        return "int"
+    if annotation is float:
+        return "float"
+    if get_origin(annotation) is tuple:
+        return "float_list"
+    raise TypeError(f"config: no schema type for {annotation!r}")
+
+
+def _schema_default(value: Any) -> Any:
+    """A dataclass default as a JSON value: a tuple becomes a list."""
+    if isinstance(value, tuple):
+        return [float(item) for item in value]
+    return value
+
+
+def config_schema() -> dict[str, Any]:
+    """The editor schema: the real models and every config field, by reflection.
+
+    The defaults come from `Config()`, not from a loaded `config.toml`, so the
+    editor starts from the same numbers as `config.example.toml`.
+    """
+    config = Config()
+    sections = []
+    for section_field in fields(config):
+        section = getattr(config, section_field.name)
+        hints = get_type_hints(type(section))
+        section_fields = []
+        for item in fields(section):
+            value = getattr(section, item.name)
+            section_fields.append(
+                {
+                    "key": f"{section_field.name}.{item.name}",
+                    "label": _display_label(item.name),
+                    "type": _schema_type(hints[item.name]),
+                    "default": _schema_default(value),
+                    "comment": item.metadata.get("comment", ""),
+                }
+            )
+        sections.append(
+            {
+                "name": section_field.name,
+                "label": _display_label(section_field.name),
+                "fields": section_fields,
+            }
+        )
+    models = [{"name": name, "label": _display_label(name)} for name in model_names()]
+    return {"models": models, "sections": sections}
+
+
 def hose_clip_total_diameter(
     hose_diameter: float,
-    backbone_wall_thickness: float = CONFIG.library.clip_backbone_wall_thickness,
-    radial_gap: float = CONFIG.library.clip_radial_gap,
-    tongue_wall_thickness: float = CONFIG.library.clip_tongue_wall_thickness,
+    backbone_wall_thickness: float | None = None,
+    radial_gap: float | None = None,
+    tongue_wall_thickness: float | None = None,
 ) -> float:
     """Outside diameter of an assembled clip: the flexible tongue, the radial
-    gap and the structural outer wall."""
+    gap and the structural outer wall.
+
+    A wall left as `None` comes from the `[library]` config section at call
+    time, not at import time, so the web server can change the wall for one
+    request. A default of `CONFIG.library.*` would freeze the values when this
+    module loads.
+    """
+    if backbone_wall_thickness is None:
+        backbone_wall_thickness = CONFIG.library.clip_backbone_wall_thickness
+    if radial_gap is None:
+        radial_gap = CONFIG.library.clip_radial_gap
+    if tongue_wall_thickness is None:
+        tongue_wall_thickness = CONFIG.library.clip_tongue_wall_thickness
     return (
         hose_diameter + tongue_wall_thickness / 2 + radial_gap + backbone_wall_thickness
     )
