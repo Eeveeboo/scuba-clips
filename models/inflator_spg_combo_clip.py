@@ -16,7 +16,7 @@ from __future__ import annotations
 from math import acos, degrees, sqrt
 from typing import Final
 
-from lib.c_clip import hose_clip, hose_clip_keepout
+from lib.c_clip2 import hose_clip, hose_clip_keepout
 from lib.config import CONFIG, hose_clip_total_diameter
 from lib.scad import OpenSCADObjectPlus
 from lib.standoff import hose_clip_on_standoff

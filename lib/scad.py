@@ -13,9 +13,10 @@ The wrappers below carry the argument types and the return type that this
 project uses. Each wrapper forwards to the solid2 builder. Import the builders
 from `lib.scad`, not from `solid2`.
 
-A node also takes `+` for union and `-` for difference: `a + b` is
-`union()([a, b])` and `a - b` is `difference()([a, b])`. `a += b` and `a -= b`
-work too, because Python rebinds the name through `__add__`/`__sub__`.
+A node also takes `+` for union, `-` for difference and `&` for intersection:
+`a + b` is `union()([a, b])`, `a - b` is `difference()([a, b])` and `a & b` is
+`intersection()([a, b])`. `a += b`, `a -= b` and `a &= b` work too, because
+Python rebinds the name through `__add__`/`__sub__`/`__and__`.
 
 A node also takes the transforms as methods, so a chain reads in the order that
 the part moves:
@@ -27,12 +28,12 @@ or as one sequence, `a.translate(v)`. A lone number in `rotate` is a turn about
 the z axis, as solid2 reads it: `a.rotate(45)`. The module function keeps its own
 argument: `translate(v)`, `rotate(a)`, `mirror(v)`.
 
-The builders return `_Node`, a thin wrapper. solid2's own `+`/`-` flatten a
-nested operand of the same type: `(a - b) - c` becomes one `difference(a,b,c)`
+The builders return `_Node`, a thin wrapper. solid2's own `+`/`-`/`&` flatten
+a nested operand of the same type: `(a - b) - c` becomes one `difference(a,b,c)`
 instead of a nested pair. That changes the CSG tree, the manifold tessellation
 and the non-manifold edge count, and `uv run cli check-baseline` rejects it. `_Node`
 keeps the operands nested, so the operators build exactly the tree that
-`union()([a, b])` and `difference()([a, b])` build.
+`union()([a, b])`, `difference()([a, b])` and `intersection()([a, b])` build.
 
 solid2 also writes `h: float = None` for an optional parameter. ty reads that as
 `float`, not `float | None`, so a forwarded `float | None` fails the check. The
@@ -62,6 +63,10 @@ class ScadNode(Protocol):
 
     def __sub__(self, other: ScadChild, /) -> ScadNode:
         """`a - b` builds the difference: `a` minus `b`. `a -= b` also works."""
+        ...
+
+    def __and__(self, other: ScadChild, /) -> ScadNode:
+        """`a & b` builds the intersection of `a` and `b`. `a &= b` also works."""
         ...
 
     def translate(
@@ -94,6 +99,33 @@ class ScadNode(Protocol):
         normal vector. `a.mirror(v)` takes the vector as one sequence."""
         ...
 
+    def linear_extrude(
+        self,
+        height: float | None = None,
+        center: bool | None = None,
+        convexity: int | None = None,
+        twist: float | None = None,
+        slices: int | None = None,
+        scale: float | None = None,
+    ) -> ScadNode:
+        """`a.linear_extrude(height=h)` sweeps the 2D node `a` upward into a
+        solid. The arguments match the module-level builder."""
+        ...
+
+    def rotate_extrude(
+        self,
+        angle: float | None = 360,
+        convexity: int | None = None,
+        _fn: int | None = None,
+    ) -> ScadNode:
+        """`a.rotate_extrude(angle=a)` sweeps the 2D node `a` around the z axis.
+        The arguments match the module-level builder."""
+        ...
+
+    def hull(self) -> ScadNode:
+        """`a.hull()` wraps the node in the convex hull of its geometry."""
+        ...
+
 
 # A child argument is one node, or a sequence of nodes and nested sequences.
 ScadChild: TypeAlias = "ScadNode | Sequence[ScadChild]"
@@ -113,10 +145,12 @@ class _Node:
     in a builder result such as `c_ring_rounded_two_openings(...)`, which the
     original `union()([...])` call kept as one child, and the mesh changes.
 
-    _Node flattens only a union node it built itself in an earlier step of the
-    same chain. So `a + b + c` becomes one `union(a, b, c)`, exactly the tree
-    that the original flat `union()([a, b, c])` call built. A difference never
-    flattens: `a - b` is always `difference(a, b)`.
+    _Node flattens only a union or intersection node it built itself in an
+    earlier step of the same chain. So `a + b + c` becomes one
+    `union(a, b, c)`, exactly the tree that the original flat
+    `union()([a, b, c])` call built, and `a & b & c` becomes one
+    `intersection(a, b, c)`. A difference never flattens: `a - b` is always
+    `difference(a, b)`.
 
     One limit: the chain mark travels with the value, so a helper that builds
     its result with `+` and is then the left operand of `+` in its caller is
@@ -158,15 +192,63 @@ class _Node:
     ) -> ScadNode:
         return _Node(_mirror(_vector(x, y, z))(self._inner))
 
+    def linear_extrude(
+        self,
+        height: float | None = None,
+        center: bool | None = None,
+        convexity: int | None = None,
+        twist: float | None = None,
+        slices: int | None = None,
+        scale: float | None = None,
+    ) -> ScadNode:
+        return _Node(
+            _linear_extrude(
+                height=height,
+                center=center,
+                convexity=convexity,
+                twist=twist,
+                slices=slices,
+                scale=scale,
+            )(self._inner)
+        )
+
+    def rotate_extrude(
+        self,
+        angle: float | None = 360,
+        convexity: int | None = None,
+        _fn: int | None = CONFIG.library.tessellation_resolution,
+    ) -> ScadNode:
+        return _Node(
+            _rotate_extrude(angle=angle, convexity=convexity, _fn=_fn)(self._inner)
+        )
+
+    def hull(self) -> ScadNode:
+        return _Node(_solid2.hull()(self._inner))
+
     def __add__(self, other: ScadChild, /) -> ScadNode:
         return _Node(self._add_union(other), "union")
 
     def __sub__(self, other: ScadChild, /) -> ScadNode:
         return _Node(_solid2.difference()(self._inner, _unwrap(other)), "difference")
 
+    def __and__(self, other: ScadChild, /) -> ScadNode:
+        return _Node(self._add_intersection(other), "intersection")
+
     def _add_union(self, other: ScadChild) -> Any:
-        node = _solid2.union()
-        if self._op == "union":
+        return self._add_same_kind(_solid2.union(), "union", other)
+
+    def _add_intersection(self, other: ScadChild) -> Any:
+        return self._add_same_kind(_solid2.intersection(), "intersection", other)
+
+    def _add_same_kind(self, node: Any, op: str, other: ScadChild) -> Any:
+        """Fill a new union or intersection node with `self` and `other`.
+
+        Pull the children of `self` into the new node only when `self` is a
+        chain of the same operator, so `a + b + c` and `a & b & c` stay flat
+        and match the original `union()`/`intersection()` call. Any other
+        operand, including a difference, stays one child.
+        """
+        if self._op == op:
             for child in self._inner._children:
                 node.add(child)
         else:
@@ -213,6 +295,8 @@ _translate = cast(_Primitive, _solid2.translate)
 _rotate = cast(_Primitive, _solid2.rotate)
 _mirror = cast(_Primitive, _solid2.mirror)
 _sphere = cast(_Primitive, _solid2.sphere)
+_circle = cast(_Primitive, _solid2.circle)
+_offset = cast(_Primitive, _solid2.offset)
 _cylinder = cast(_Primitive, _solid2.cylinder)
 _polygon = cast(_Primitive, _solid2.polygon)
 _linear_extrude = cast(_Primitive, _solid2.linear_extrude)
@@ -232,6 +316,14 @@ def square(
     center: bool | None = None,
 ) -> ScadNode:
     return _Node(_solid2.square(size=size, center=center))
+
+
+def circle(
+    r: float | None = None,
+    d: float | None = None,
+    _fn: int | None = CONFIG.library.tessellation_resolution,
+) -> ScadNode:
+    return _Node(_circle(r=r, d=d, _fn=_fn))
 
 
 def sphere(
@@ -278,8 +370,21 @@ def difference() -> ScadNode:
     return _Node(_solid2.difference())
 
 
+def intersection() -> ScadNode:
+    return _Node(_solid2.intersection())
+
+
 def hull() -> ScadNode:
     return _Node(_solid2.hull())
+
+
+def offset(
+    r: float | None = None,
+    delta: float | None = None,
+    chamfer: bool | None = None,
+    _fn: int | None = CONFIG.library.tessellation_resolution,
+) -> ScadNode:
+    return _Node(_offset(r=r, delta=delta, chamfer=chamfer, _fn=_fn))
 
 
 def translate(v: Sequence[float] | None = None) -> ScadNode:

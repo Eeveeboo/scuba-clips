@@ -58,6 +58,12 @@ def _parse_value(key: str, raw: str, type_name: str) -> Any:
             return float(raw)
         except ValueError:
             raise ValueError(f"bad value for {key}: {raw}") from None
+    if type_name == "bool":
+        if raw == "true":
+            return True
+        if raw == "false":
+            return False
+        raise ValueError(f"bad value for {key}: {raw}")
     if type_name == "float_list":
         parts = raw.split(",")
         if len(parts) != 2:

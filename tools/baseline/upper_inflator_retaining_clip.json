@@ -1,25 +1,25 @@
 {
   "bbox_max": [
-    27.999,
-    32.887,
-    24.999
+    27.8,
+    32.086,
+    24.994
   ],
   "bbox_min": [
-    -27.999,
-    -4.499,
-    -25.0
+    -27.8,
+    -4.294,
+    -24.997
   ],
-  "edges_not_used_twice": 2,
+  "edges_not_used_twice": 286,
   "file": "upper_inflator_retaining_clip.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.12",
+  "openscad_version": "2026.09.30",
   "size": [
-    55.999,
-    37.386,
-    49.999
+    55.6,
+    36.38,
+    49.991
   ],
-  "source_commit": "77fa51b",
-  "tessellation": 100,
-  "triangles": 13734,
-  "volume_mm3": 21459.788
+  "source_commit": "c42cd07",
+  "tessellation": 50,
+  "triangles": 10762,
+  "volume_mm3": 19660.695
 }
