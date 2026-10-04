@@ -9,7 +9,7 @@
     -105.294,
     -25.5
   ],
-  "edges_not_used_twice": 2814,
+  "edges_not_used_twice": 2812,
   "file": "all.stl",
   "open_edges": 0,
   "openscad_version": "2026.09.30",
@@ -18,8 +18,8 @@
     143.799,
     50.494
   ],
-  "source_commit": "c42cd07",
+  "source_commit": "0fdcc90",
   "tessellation": 50,
-  "triangles": 76172,
-  "volume_mm3": 60181.264
+  "triangles": 76348,
+  "volume_mm3": 60198.111
 }
