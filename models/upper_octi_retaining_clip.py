@@ -105,6 +105,6 @@ def upper_octi_retaining_clip() -> OpenSCADObjectPlus:
         slit_tightness=clip_config.slit_tightness,
         slit_flare_start=clip_config.slit_flare_start,
         wall_thickness=wall_thickness,
-    )
+    ).mirror(0, 1, 0)
 
     return body - webbing_cut.translate(0, block_thickness / -2, 0)
