@@ -1,25 +1,25 @@
 {
   "bbox_max": [
-    35.746,
-    16.871,
+    35.063,
+    17.071,
     5.0
   ],
   "bbox_min": [
-    -11.887,
-    -22.411,
+    -11.086,
+    -22.362,
     -5.0
   ],
-  "edges_not_used_twice": 6,
+  "edges_not_used_twice": 913,
   "file": "inflator_spg_combo_clip.stl",
   "open_edges": 0,
   "openscad_version": "2026.09.12",
   "size": [
-    47.633,
-    39.283,
+    46.148,
+    39.433,
     10.0
   ],
-  "source_commit": "77fa51b",
-  "tessellation": 100,
-  "triangles": 9206,
-  "volume_mm3": 5527.243
+  "source_commit": "98c11cd",
+  "tessellation": 50,
+  "triangles": 22820,
+  "volume_mm3": 5137.336
 }

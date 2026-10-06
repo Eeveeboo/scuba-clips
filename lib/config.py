@@ -45,19 +45,28 @@ class LibraryConfig:
     """Fit defaults shared by the geometry builders in lib/."""
 
     tessellation_resolution: int = _field(
-        100, "Tessellation detail for cylinders; 100 is the old $fn = 100."
+        50, "Tessellation detail for curves."
     )
     dimensional_resolution: float = _field(
         0.01, "Small length used as a lower bound in a shape check."
     )
     clip_tongue_wall_thickness: float = _field(
-        2.0, "Flexible tongue wall thickness of a hose clip."
+        .8, "Flexible tongue wall thickness of a hose clip."
     )
     clip_radial_gap: float = _field(
-        2.0, "Radial gap between the tongue and the outer wall."
+        .8, "Radial gap between the tongue and the outer wall."
     )
     clip_backbone_wall_thickness: float = _field(
-        3.0, "Structural outer wall thickness of a hose clip."
+        1.6, "Structural outer wall thickness of a hose clip."
+    )
+    webbing_wall_thickness: float = _field(
+        2.8, "Structural outer wall for clamping around webbing."
+    )
+    standoff_rounding_radius: float = _field(
+        2, "Radius that rounds the convex corners of a standoff footprint."
+    )
+    tpu_mode: bool = _field(
+        False, "Removes the gap which creates the flexible tongue. Decrease the opening angles and hose tolerance as well."
     )
 
 
@@ -69,26 +78,37 @@ class HardwareConfig:
     A hose only has a high pressure or a low pressure. Each hose type still
     needs its own diameter: a size up or down changes how hard the clip lets
     the hose go.
+
+    Set each diameter to the real size of the hose or fitting. The kit cuts the
+    clip to that exact size and takes off no snug allowance of its own. Subtract
+    0.5 mm from a hose diameter if you want the clip to grip the hose tighter.
     """
 
     inflator_tube_diameter: float = _field(
         27.0, "BCD inflator tube, held by the combo clip."
     )
     lp_inflator_hose_diameter: float = _field(
-        12.5, "LP hose, first stage to the BCD inflator."
+        12, "LP hose, first stage to the BCD inflator. Subtract 0.5 for a snug fit."
     )
-    spg_hose_diameter: float = _field(8.0, "HP hose, first stage to the SPG.")
+    spg_hose_diameter: float = _field(
+        8.0, "HP hose, first stage to the SPG. Subtract 0.5 for a snug fit."
+    )
     regulator_fitting_diameter: float = _field(
-        18.5, "LP hose fitting at the second stage, held by the octi clip."
+        18,
+        "LP hose fitting at the second stage, held by the octi clip. "
+        "Subtract 0.5 for a snug fit.",
     )
     regulator_fitting_length: float = _field(
         15.0, "Length of that fitting; the octi clip grips this length."
     )
     regulator_hose_diameter: float = _field(
-        12.5, "LP hose, first stage to the second stage."
+        11.5,
+        "LP hose, first stage to the second stage. Subtract 0.5 for a snug fit.",
     )
     side_clip_hose_diameter: float = _field(
-        12.5, "LP hose held by the lower octopus retaining clip."
+        11.5,
+        "LP hose held by the lower octopus retaining clip. Subtract 0.5 for a "
+        "snug fit.",
     )
     tongue_back_angle: float = _field(
         60.0, "Tongue opening at the back (closed side) of a hose clip, in degrees."
@@ -183,6 +203,27 @@ class LowerOctiRetainingClipConfig:
 
 
 @dataclass(frozen=True)
+class TwoWayClipConfig:
+    """Tuning of the two-way cord clip that keeps two hoses together."""
+
+    hose_1_diameter: float = _field(
+        8.0,
+        "Hose in the clip on the +X side. Subtract 0.5 for a snug fit.",
+    )
+    hose_2_diameter: float = _field(
+        11.5,
+        "Hose in the clip on the -X side. Subtract 0.5 for a snug fit.",
+    )
+    clip_grip_length: float = _field(10.0, "Length of hose each clip grips.")
+    clip_center_distance: float = _field(
+        10.0, "Distance from the hub centre to each clip centre."
+    )
+    cord_hole_diameter: float = _field(
+        4.0, "Diameter of the cord hole through the hub, along the hoses."
+    )
+
+
+@dataclass(frozen=True)
 class Config:
     """Every default, grouped by the section it is written under in TOML."""
 
@@ -196,6 +237,7 @@ class Config:
     lower_octi_retaining_clip: LowerOctiRetainingClipConfig = field(
         default_factory=LowerOctiRetainingClipConfig
     )
+    two_way_clip: TwoWayClipConfig = field(default_factory=TwoWayClipConfig)
 
 
 ConfigT = TypeVar("ConfigT")
@@ -203,6 +245,12 @@ ConfigT = TypeVar("ConfigT")
 
 def _value(raw: Any, annotation: Any, where: str) -> Any:
     """One TOML value, checked and converted to the type of its field."""
+    if annotation is bool:
+        # bool must come before int: `isinstance(True, int)` is True, so the
+        # int branch would otherwise swallow a boolean without a word.
+        if not isinstance(raw, bool):
+            raise TypeError(f"config.toml: {where} must be true or false, got {raw!r}")
+        return raw
     if annotation is int:
         if isinstance(raw, bool) or not isinstance(raw, int):
             raise TypeError(f"config.toml: {where} must be a whole number, got {raw!r}")
@@ -320,6 +368,8 @@ def _schema_type(annotation: Any) -> str:
         return "int"
     if annotation is float:
         return "float"
+    if annotation is bool:
+        return "bool"
     if get_origin(annotation) is tuple:
         return "float_list"
     raise TypeError(f"config: no schema type for {annotation!r}")
@@ -387,17 +437,8 @@ def hose_clip_total_diameter(
     if tongue_wall_thickness is None:
         tongue_wall_thickness = CONFIG.library.clip_tongue_wall_thickness
     return (
-        hose_diameter + tongue_wall_thickness / 2 + radial_gap + backbone_wall_thickness
+        hose_diameter + tongue_wall_thickness * 2 + radial_gap * 2 + backbone_wall_thickness * 2
     )
-
-
-def hose_clip_base_diameter(
-    hose_diameter: float, tongue_wall_thickness: float
-) -> float:
-    """Outside diameter of the inner C, the flexible tongue: the hose plus half
-    the tongue wall, so the tongue wall lies half inside and half outside the
-    hose surface."""
-    return hose_diameter + tongue_wall_thickness / 2
 
 
 EXAMPLE_HEADER = """\
@@ -406,7 +447,7 @@ EXAMPLE_HEADER = """\
 # Copy this file to config.toml in the repo root and edit your own values.
 # config.toml is gitignored. Every key below has this value as its default,
 # so a key you leave out keeps that value.
-# 
+#
 # All values are either in millimeters or degrees.
 """
 

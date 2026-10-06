@@ -16,7 +16,7 @@ model file name without its extension.  A PNG is trimmed to the geometry plus a
 floating in background.  The full OpenSCAD output goes to <outdir>/<name>.log.
 
 The plate's region count is checked against the model's own EXPECTED_REGIONS:
-models/all.py says 3, each single part 1.  --components N overrides it.  A
+models/all.py says 5, each single part 1.  --components N overrides it.  A
 mismatch is a WARNING, not a failure: a camera that merges two parts is worth
 saying, but it is a judgement call.  The count used to be a hard-coded 3 here,
 which meant a camera change could quietly stop showing a part while the render
@@ -61,11 +61,10 @@ if str(ROOT) not in sys.path:
 #           bores read as enclosed holes only at no spin (33 enclosed background
 #           cells against 0 at 45/30), which is the feature that identifies that
 #           part [0.51].
-# 45,0, 0 : hero plate.  The print plate is L-shaped (three parts), and the
-#           webbing clip sits 50 mm behind the combo clip while both are 50..60 mm
-#           wide.  Measured: tilt 0..50 keeps three separate silhouettes, tilt 60
-#           and above merges them into one blob.  45 keeps 5 degrees of margin
-#           below the flip and still shows the parts in three-quarter view [0.09].
+# 45,0, 0 : hero plate.  The print plate holds five parts: a 2x2 grid plus the
+#           two-way clip to the side.  At 45 degrees of tilt all five stay
+#           separate silhouettes (png_check counts 5), and the parts still show
+#           in three-quarter view [0.20].
 # 30,0,90 : the octi clip's bores run along Z, so a near-plan view looks down
 #           them and shows them as holes; a three-quarter view hides them and
 #           reads as the back of the part.  Enclosed bore pixels: 1856 at tilt 25,

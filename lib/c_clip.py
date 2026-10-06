@@ -10,7 +10,7 @@ Every builder here builds centred on the origin. The caller translates.
 
 from __future__ import annotations
 
-from lib.config import CONFIG, hose_clip_base_diameter, hose_clip_total_diameter
+from lib.config import CONFIG, hose_clip_total_diameter
 from lib.scad import (
     OpenSCADObjectPlus,
     cylinder,
@@ -158,7 +158,7 @@ def hose_clip(
     if not (backbone_front_angle + opening_angle_offset + tongue_back_angle < 360):
         raise ValueError("hose_clip: the front and back openings must leave material")
 
-    base_diameter = hose_clip_base_diameter(hose_diameter, tongue_wall_thickness)
+    base_diameter = hose_diameter
     tongue_front_angle = backbone_front_angle + opening_angle_offset
     # Mid-wall radii of the tongue and the backbone: the two ends of each arm.
     tongue_mid_radius = (base_diameter - tongue_wall_thickness / 2) / 2

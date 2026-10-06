@@ -28,6 +28,16 @@ Is this overkill to replace the velcro? Maybe, but I didn't like it, so I replac
 |-|
 |![](.readme_images/upper_inflator_retaining_clip.png)|
 
+### Two-way cord clip
+For when two hoses only need to stay together. The two clips open away from each other (180°), and the rounded middle tapers from one hose size to the other. A small hole runs through that middle between them. A cord or a zip tie goes through the hole, so you can tie the clip to a D-ring or a bolt snap.
+
+||
+|-|
+|![](.readme_images/two_way_clip.png)|
+
+### Soft edges
+Every clip has soft, rounded edges now. The rounding is not perfect: where two rounded faces meet, a small crease can remain. It is still more than good enough for a printed part, and it keeps the edges from cutting into the hose.
+
 
 ## So... how do I build the models myself? 🤩
 
@@ -41,6 +51,12 @@ Is this overkill to replace the velcro? Maybe, but I didn't like it, so I replac
 ### Configuration ⚙️
 
 Copy `config.example.toml` to `config.toml` and update the measurements to match your own kit's spacing, diameters and webbing configuration.
+
+### Fit 🤏
+
+The generator cuts each hose clip to the diameter you set, and it takes off no
+snug allowance of its own. Set each hose diameter to the real hose size. When
+you want a clip to grip the hose tighter, subtract 0.5 mm from that number.
 
 ### Generate the clips ✨
 

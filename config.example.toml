@@ -3,24 +3,27 @@
 # Copy this file to config.toml in the repo root and edit your own values.
 # config.toml is gitignored. Every key below has this value as its default,
 # so a key you leave out keeps that value.
-# 
+#
 # All values are either in millimeters or degrees.
 
 [library]
-tessellation_resolution = 100  # Tessellation detail for cylinders; 100 is the old $fn = 100.
+tessellation_resolution = 50  # Tessellation detail for curves.
 dimensional_resolution = 0.01  # Small length used as a lower bound in a shape check.
-clip_tongue_wall_thickness = 2.0  # Flexible tongue wall thickness of a hose clip.
-clip_radial_gap = 2.0  # Radial gap between the tongue and the outer wall.
-clip_backbone_wall_thickness = 3.0  # Structural outer wall thickness of a hose clip.
+clip_tongue_wall_thickness = 0.8  # Flexible tongue wall thickness of a hose clip.
+clip_radial_gap = 0.8  # Radial gap between the tongue and the outer wall.
+clip_backbone_wall_thickness = 1.6  # Structural outer wall thickness of a hose clip.
+webbing_wall_thickness = 2.8  # Structural outer wall for clamping around webbing.
+standoff_rounding_radius = 2  # Radius that rounds the convex corners of a standoff footprint.
+tpu_mode = false  # Removes the gap which creates the flexible tongue. Decrease the opening angles and hose tolerance as well.
 
 [hardware]
 inflator_tube_diameter = 27.0  # BCD inflator tube, held by the combo clip.
-lp_inflator_hose_diameter = 12.5  # LP hose, first stage to the BCD inflator.
-spg_hose_diameter = 8.0  # HP hose, first stage to the SPG.
-regulator_fitting_diameter = 18.5  # LP hose fitting at the second stage, held by the octi clip.
+lp_inflator_hose_diameter = 12  # LP hose, first stage to the BCD inflator. Subtract 0.5 for a snug fit.
+spg_hose_diameter = 8.0  # HP hose, first stage to the SPG. Subtract 0.5 for a snug fit.
+regulator_fitting_diameter = 18  # LP hose fitting at the second stage, held by the octi clip. Subtract 0.5 for a snug fit.
 regulator_fitting_length = 15.0  # Length of that fitting; the octi clip grips this length.
-regulator_hose_diameter = 12.5  # LP hose, first stage to the second stage.
-side_clip_hose_diameter = 12.5  # LP hose held by the lower octopus retaining clip.
+regulator_hose_diameter = 11.5  # LP hose, first stage to the second stage. Subtract 0.5 for a snug fit.
+side_clip_hose_diameter = 11.5  # LP hose held by the lower octopus retaining clip. Subtract 0.5 for a snug fit.
 tongue_back_angle = 60.0  # Tongue opening at the back (closed side) of a hose clip, in degrees.
 backbone_front_angle = 90.0  # Opening at the front (open side) of a hose clip, in degrees.
 opening_angle_offset = 15.0  # Extra front opening angle of the clip and of the relief cut, in degrees.
@@ -53,3 +56,10 @@ clip_grip_length = 20.0  # Length of inflator tube the clip grips.
 block_height = 20.0  # Height of the webbing block.
 webbing_clearance = 0.5  # Clearance, so the webbing slides in.
 clip_grip_length = 10.0  # Length of hose each of the two clips grips.
+
+[two_way_clip]
+hose_1_diameter = 8.0  # Hose in the clip on the +X side. Subtract 0.5 for a snug fit.
+hose_2_diameter = 11.5  # Hose in the clip on the -X side. Subtract 0.5 for a snug fit.
+clip_grip_length = 10.0  # Length of hose each clip grips.
+clip_center_distance = 10.0  # Distance from the hub centre to each clip centre.
+cord_hole_diameter = 4.0  # Diameter of the cord hole through the hub, along the hoses.

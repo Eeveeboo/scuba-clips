@@ -15,7 +15,7 @@ def flared_webbing_slit(
     strap_block_height: float,
     slit_tightness: float,
     slit_flare_start: float,
-    backbone_wall_thickness: float,
+    wall_thickness: float,
 ) -> OpenSCADObjectPlus:
     """Flared slit cutter in the XZ plane (X = slit width, Z = slit length),
     lifted to the webbing's near (+Y) face.
@@ -37,7 +37,7 @@ def flared_webbing_slit(
         raise ValueError("flared_webbing_slit: strap_block_height must be positive")
     if slit_tightness < 0:
         raise ValueError("flared_webbing_slit: slit_tightness must not be negative")
-    if backbone_wall_thickness <= 0:
+    if wall_thickness <= 0:
         raise ValueError(
             "flared_webbing_slit: backbone_wall_thickness must be positive"
         )
@@ -56,7 +56,7 @@ def flared_webbing_slit(
             (outer_half_width - inner_half_width) / (slit_length / 2 - slit_flare_start)
         )
     )
-    thickness = backbone_wall_thickness + 1  # Y thickness of the cutter
+    thickness = wall_thickness + 1  # Y thickness of the cutter
     # Lift the cutter, so it meets the webbing at the webbing's near face.
     y_offset = (webbing_thickness + thickness) / 2
 

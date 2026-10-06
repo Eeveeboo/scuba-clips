@@ -25,12 +25,12 @@ def upper_octi_retaining_clip() -> OpenSCADObjectPlus:
     through."""
     clip_config = CONFIG.upper_octi_retaining_clip
     hardware = CONFIG.hardware
-    backbone_wall_thickness = CONFIG.library.clip_backbone_wall_thickness
+    wall_thickness = CONFIG.library.webbing_wall_thickness
 
     # The strap block carries the webbing plus one wall on each side.
     webbing_width, webbing_thickness = hardware.webbing_shoulder_size
-    block_thickness = webbing_thickness + backbone_wall_thickness * 2
-    block_width = webbing_width + backbone_wall_thickness * 2
+    block_thickness = webbing_thickness + wall_thickness * 2
+    block_width = webbing_width + wall_thickness * 2
 
     # The webbing slot is a cutter: it must pass both faces of the strap block,
     # or the boolean cut leaves a coplanar face. The 1 mm overshoot is the same
@@ -48,7 +48,7 @@ def upper_octi_retaining_clip() -> OpenSCADObjectPlus:
         return rounded_cube(
             size=[block_width, block_thickness, height],
             center=True,
-            radius=backbone_wall_thickness / 2,
+            radius=wall_thickness,
             apply_to="all",
         ).translate(0, block_thickness / -2, 0)
 
@@ -104,7 +104,7 @@ def upper_octi_retaining_clip() -> OpenSCADObjectPlus:
         strap_block_height=clip_config.strap_block_height,
         slit_tightness=clip_config.slit_tightness,
         slit_flare_start=clip_config.slit_flare_start,
-        backbone_wall_thickness=backbone_wall_thickness,
-    )
+        wall_thickness=wall_thickness,
+    ).mirror(0, 1, 0)
 
     return body - webbing_cut.translate(0, block_thickness / -2, 0)
