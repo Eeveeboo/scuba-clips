@@ -1,25 +1,25 @@
 {
   "bbox_max": [
-    31.95,
-    21.927,
+    31.7,
+    21.492,
     9.994
   ],
   "bbox_min": [
-    -31.95,
+    -31.7,
     -5.294,
     -10.0
   ],
-  "edges_not_used_twice": 966,
+  "edges_not_used_twice": 954,
   "file": "lower_octi_retaining_clip.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.30",
+  "openscad_version": "2026.09.12",
   "size": [
-    63.9,
-    27.222,
+    63.4,
+    26.787,
     19.994
   ],
-  "source_commit": "0fdcc90",
+  "source_commit": "98c11cd",
   "tessellation": 50,
-  "triangles": 21520,
-  "volume_mm3": 10123.671
+  "triangles": 21528,
+  "volume_mm3": 9973.814
 }

@@ -1,0 +1,25 @@
+{
+  "bbox_max": [
+    14.261,
+    8.941,
+    4.997
+  ],
+  "bbox_min": [
+    -15.541,
+    -8.941,
+    -4.997
+  ],
+  "edges_not_used_twice": 592,
+  "file": "two_way_clip.stl",
+  "open_edges": 0,
+  "openscad_version": "2026.09.12",
+  "size": [
+    29.802,
+    17.882,
+    9.994
+  ],
+  "source_commit": "98c11cd",
+  "tessellation": 50,
+  "triangles": 15558,
+  "volume_mm3": 2367.994
+}

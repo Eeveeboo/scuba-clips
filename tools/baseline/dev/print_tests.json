@@ -12,14 +12,14 @@
   "edges_not_used_twice": 5,
   "file": "dev/print_tests.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.30",
+  "openscad_version": "2026.09.12",
   "size": [
     94.887,
     148.444,
     10.5
   ],
-  "source_commit": "0fdcc90",
+  "source_commit": "98c11cd",
   "tessellation": 50,
-  "triangles": 35154,
+  "triangles": 35164,
   "volume_mm3": 31680.019
 }

@@ -10,7 +10,7 @@ Exit code 1 if an image is unreadable, blank, or clipped at the frame edge.  A
 region count that does not match --components N is a WARNING instead: how a
 camera splits a part into silhouettes is a judgement call, so it is worth
 reporting and not worth blocking an otherwise good render over.  A plate that
-should show three parts but resolves into two has hidden one of them.
+should show five parts but resolves into four has hidden one of them.
 """
 import os
 import sys

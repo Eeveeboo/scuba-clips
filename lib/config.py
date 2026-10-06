@@ -78,26 +78,37 @@ class HardwareConfig:
     A hose only has a high pressure or a low pressure. Each hose type still
     needs its own diameter: a size up or down changes how hard the clip lets
     the hose go.
+
+    Set each diameter to the real size of the hose or fitting. The kit cuts the
+    clip to that exact size and takes off no snug allowance of its own. Subtract
+    0.5 mm from a hose diameter if you want the clip to grip the hose tighter.
     """
 
     inflator_tube_diameter: float = _field(
         27.0, "BCD inflator tube, held by the combo clip."
     )
     lp_inflator_hose_diameter: float = _field(
-        12, "LP hose, first stage to the BCD inflator."
+        12, "LP hose, first stage to the BCD inflator. Subtract 0.5 for a snug fit."
     )
-    spg_hose_diameter: float = _field(8.0, "HP hose, first stage to the SPG.")
+    spg_hose_diameter: float = _field(
+        8.0, "HP hose, first stage to the SPG. Subtract 0.5 for a snug fit."
+    )
     regulator_fitting_diameter: float = _field(
-        18.5, "LP hose fitting at the second stage, held by the octi clip."
+        18,
+        "LP hose fitting at the second stage, held by the octi clip. "
+        "Subtract 0.5 for a snug fit.",
     )
     regulator_fitting_length: float = _field(
         15.0, "Length of that fitting; the octi clip grips this length."
     )
     regulator_hose_diameter: float = _field(
-        12, "LP hose, first stage to the second stage."
+        11.5,
+        "LP hose, first stage to the second stage. Subtract 0.5 for a snug fit.",
     )
     side_clip_hose_diameter: float = _field(
-        12, "LP hose held by the lower octopus retaining clip."
+        11.5,
+        "LP hose held by the lower octopus retaining clip. Subtract 0.5 for a "
+        "snug fit.",
     )
     tongue_back_angle: float = _field(
         60.0, "Tongue opening at the back (closed side) of a hose clip, in degrees."
@@ -192,6 +203,27 @@ class LowerOctiRetainingClipConfig:
 
 
 @dataclass(frozen=True)
+class TwoWayClipConfig:
+    """Tuning of the two-way cord clip that keeps two hoses together."""
+
+    hose_1_diameter: float = _field(
+        8.0,
+        "Hose in the clip on the +X side. Subtract 0.5 for a snug fit.",
+    )
+    hose_2_diameter: float = _field(
+        11.5,
+        "Hose in the clip on the -X side. Subtract 0.5 for a snug fit.",
+    )
+    clip_grip_length: float = _field(10.0, "Length of hose each clip grips.")
+    clip_center_distance: float = _field(
+        10.0, "Distance from the hub centre to each clip centre."
+    )
+    cord_hole_diameter: float = _field(
+        4.0, "Diameter of the cord hole through the hub, along the hoses."
+    )
+
+
+@dataclass(frozen=True)
 class Config:
     """Every default, grouped by the section it is written under in TOML."""
 
@@ -205,6 +237,7 @@ class Config:
     lower_octi_retaining_clip: LowerOctiRetainingClipConfig = field(
         default_factory=LowerOctiRetainingClipConfig
     )
+    two_way_clip: TwoWayClipConfig = field(default_factory=TwoWayClipConfig)
 
 
 ConfigT = TypeVar("ConfigT")

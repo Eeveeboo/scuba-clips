@@ -14,6 +14,7 @@ from lib.config import CONFIG
 from lib.scad import OpenSCADObjectPlus, cube
 from lib.shapes import rounded_cube
 from lib.standoff import hose_clip_on_standoff
+from lib.webbing import flared_webbing_slit
 
 EXPECTED_REGIONS: Final = 1
 
@@ -84,8 +85,20 @@ def lower_octi_retaining_clip() -> OpenSCADObjectPlus:
     # the block, so the webbing slides in.
     cuts = cube(
         size=[webbing_width, webbing_thickness, block_height + 1], center=True
-    ) + cube(
-        size=[block_width, webbing_clearance, block_height + 1], center=True
-    ).translate(block_width / -2, 0, 0)
+    )
+
+    if CONFIG.library.tpu_mode:
+        cuts += flared_webbing_slit(
+            webbing_width=webbing_width,
+            webbing_thickness=webbing_thickness - 1,
+            strap_block_height=block_height,
+            slit_tightness=webbing_thickness,
+            slit_flare_start=0.1,
+            wall_thickness=wall_thickness,
+        ).mirror(0, 1, 0)
+    else:
+        cuts += cube(
+            size=[block_width, webbing_clearance, block_height + 1], center=True
+        ).translate(block_width / -2, 0, 0)
 
     return body - cuts

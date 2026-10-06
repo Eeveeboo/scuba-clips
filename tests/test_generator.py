@@ -5,7 +5,12 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 
 from api.support.generator import render_scad
-from lib.config import Config, build_config, hose_clip_total_diameter, set_config
+from lib.config import (
+    Config,
+    build_config,
+    hose_clip_total_diameter,
+    set_config,
+)
 
 MODEL = "upper_inflator_retaining_clip"
 
@@ -67,9 +72,16 @@ def test_hose_clip_total_diameter__reads_changed_library_wall_at_call_time() -> 
     If this test fails, then the wall was frozen at import time and a library
     change does not reach the diameter.
     """
-    set_config(build_config({"library": {"clip_backbone_wall_thickness": 5.0}}))
+    overridden = build_config({"library": {"clip_backbone_wall_thickness": 5.0}})
+    set_config(overridden)
     try:
-        expected = 27.0 + 2.0 / 2 + 2.0 + 5.0
+        library = overridden.library
+        expected = (
+            27.0
+            + library.clip_tongue_wall_thickness * 2
+            + library.clip_radial_gap * 2
+            + library.clip_backbone_wall_thickness * 2
+        )
         assert hose_clip_total_diameter(27.0) == expected, (
             "Expected the backbone wall to come from the current CONFIG at call time."
         )
