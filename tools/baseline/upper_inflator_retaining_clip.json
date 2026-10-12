@@ -9,17 +9,17 @@
     -4.294,
     -24.997
   ],
-  "edges_not_used_twice": 286,
+  "edges_not_used_twice": 280,
   "file": "upper_inflator_retaining_clip.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.12",
+  "openscad_version": "2026.09.30",
   "size": [
     55.6,
     36.38,
     49.991
   ],
-  "source_commit": "98c11cd",
+  "source_commit": "0e627dc",
   "tessellation": 50,
-  "triangles": 10758,
-  "volume_mm3": 19660.695
+  "triangles": 10118,
+  "volume_mm3": 20871.642
 }

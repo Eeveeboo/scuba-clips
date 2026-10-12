@@ -14,11 +14,14 @@ Render:
 
 from __future__ import annotations
 
+import math
+from math import degrees
 from typing import Final
 
-from lib.config import CONFIG, hose_clip_total_diameter
-from lib.scad import OpenSCADObjectPlus, cylinder
-from lib.standoff import hose_clip_on_standoff
+from lib.c_clip import hose_clip, hose_clip_keepout
+from lib.c_clip2 import pill3d
+from lib.config import CONFIG
+from lib.scad import OpenSCADObjectPlus
 
 EXPECTED_REGIONS: Final = 1
 
@@ -28,65 +31,29 @@ def two_way_clip() -> OpenSCADObjectPlus:
     each other, their flared arms tapered together at the hub, and the cord hole
     through it."""
     clip_config = CONFIG.two_way_clip
-    library = CONFIG.library
 
     hose_1_diameter = clip_config.hose_1_diameter
     hose_2_diameter = clip_config.hose_2_diameter
-    grip_length = clip_config.clip_grip_length
     clip_center_distance = clip_config.clip_center_distance
-    cord_hole_diameter = clip_config.cord_hole_diameter
-    backbone_wall_thickness = library.clip_backbone_wall_thickness
+    h = clip_config.clip_grip_length
+    t = CONFIG.library.clip_backbone_wall_thickness + CONFIG.library.clip_tongue_wall_thickness + CONFIG.library.clip_radial_gap
 
-    if hose_1_diameter <= 0:
-        raise ValueError("two_way_clip: hose_1_diameter must be positive")
-    if hose_2_diameter <= 0:
-        raise ValueError("two_way_clip: hose_2_diameter must be positive")
-    if grip_length <= 0:
-        raise ValueError("two_way_clip: clip_grip_length must be positive")
-    if clip_center_distance <= 0:
-        raise ValueError("two_way_clip: clip_center_distance must be positive")
-    if cord_hole_diameter <= 0:
-        raise ValueError("two_way_clip: cord_hole_diameter must be positive")
+    clip1 = hose_clip(hose_diameter=hose_1_diameter, height=h).translate(clip_center_distance/2,0,0)
+    clip2 = hose_clip(hose_diameter=hose_2_diameter, height=h).rotate(180).translate(clip_center_distance/-2,0,0)
+    clip1neg = hose_clip_keepout(hose_diameter=hose_1_diameter, height=h).translate(clip_center_distance/2,0,0)
+    clip2neg = hose_clip_keepout(hose_diameter=hose_2_diameter, height=h).rotate(180).translate(clip_center_distance/-2,0,0)
 
-    clip_1_radius = hose_clip_total_diameter(hose_1_diameter) / 2
-    clip_2_radius = hose_clip_total_diameter(hose_2_diameter) / 2
-    # Each arm flares from its own clip to the hub. Both reach the same hub
-    # width, halfway between the two clip widths, so the two tapers form one
-    # straight taper from the larger clip to the smaller one.
-    hub_width = clip_1_radius + clip_2_radius
-    if cord_hole_diameter / 2 + backbone_wall_thickness > hub_width / 2:
-        raise ValueError(
-            "two_way_clip: the cord hole leaves too little wall in the hub"
-        )
-    if cord_hole_diameter / 2 + backbone_wall_thickness > grip_length / 2:
-        raise ValueError(
-            "two_way_clip: the cord hole leaves too little wall in the hub height"
-        )
+    r1 = hose_1_diameter/2
+    r2 = hose_2_diameter/2
+    a = pill3d(h,t).translate(r1+(t/2),0,0).rotate(degrees(math.asin((r1-r2)/clip_center_distance)) + 90).translate(clip_center_distance/2,0,0)
+    b = a.mirror(0,1,0)
+    c = pill3d(h,t).translate(r2+(t/2),0,0).rotate(degrees(math.asin((r1-r2)/clip_center_distance)) + 90).translate(clip_center_distance/-2,0,0)
+    d = c.mirror(0,1,0)
 
-    # Each arm runs past the centre by the rounding radius, so its rounded base
-    # edge is buried in the other arm. Without that overlap the two rounded base
-    # edges meet at the centre and leave a groove, the divot seen from the side.
-    overlap = library.standoff_rounding_radius
+    clips = clip1 + clip2
+    if clip_config.lattice_only:
+        bridge = (a+c).hull() + (b+d).hull();
+    else:
+        bridge = (a+b+c+d).hull() - clip1neg - clip2neg
 
-    def standoff_clip(hose_diameter: float) -> OpenSCADObjectPlus:
-        """One standoff hose clip: its centre on the origin, its opening on +X
-        and its arm flaring back along -X past the hub centre."""
-        return hose_clip_on_standoff(
-            height=grip_length,
-            hose_diameter=hose_diameter,
-            standoff_height=clip_center_distance + overlap,
-            origin="center",
-            base_diameter=hub_width,
-            backbone_wall_thickness=backbone_wall_thickness,
-            round_base=False,
-        ).rotate(0, 0, -90)
-
-    # The +X clip carries hose 1. The mirror turns the opening to -X and puts
-    # the second clip on the -X side, so the pair is 180 degrees apart.
-    clips = standoff_clip(hose_1_diameter).translate(clip_center_distance, 0, 0)
-    clips += standoff_clip(hose_2_diameter).translate(
-        clip_center_distance, 0, 0
-    ).mirror(1, 0, 0)
-    cord_hole = cylinder(h=grip_length + 1, d=cord_hole_diameter, center=True)
-
-    return clips - cord_hole
+    return clips + bridge

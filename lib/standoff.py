@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from math import sqrt
 
-from lib.c_clip2 import hose_clip, hose_clip_keepout
+from lib.c_clip import hose_clip, hose_clip_keepout
 from lib.config import CONFIG, hose_clip_total_diameter
 from lib.scad import (
     OpenSCADObjectPlus,

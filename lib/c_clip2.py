@@ -16,7 +16,7 @@ def _pill2d(h: float, t: float, eps: float = 0) -> OpenSCADObjectPlus:
     return shape
 
 
-def _pill3d(h: float, t: float) -> OpenSCADObjectPlus:
+def pill3d(h: float, t: float) -> OpenSCADObjectPlus:
     obj = cylinder(h=h - t, r=t / 2, center=True)
     obj += sphere(r=t/2).translate([0, 0, (h - t) / 2])
     obj += sphere(r=t/2).translate([0, 0, (h - t) / -2])
@@ -25,15 +25,15 @@ def _pill3d(h: float, t: float) -> OpenSCADObjectPlus:
 def _inverse_capped_pill_arc(h: float, id: float, od: float, a: float, eps: float=0):
     t = (od - id) / 2
     obj = _pill2d(h, t, eps).translate([id / 2 + (t) / 2, 0, 0]).rotate_extrude(a)
-    obj -= _pill3d(h, t).translate([id / 2 + t / 2, 0, 0])
-    obj -= _pill3d(h, t).translate([id / 2 + t / 2, 0, 0]).rotate([0, 0, a])
+    obj -= pill3d(h, t).translate([id / 2 + t / 2, 0, 0])
+    obj -= pill3d(h, t).translate([id / 2 + t / 2, 0, 0]).rotate([0, 0, a])
     return obj.rotate(a / -2 + 180)
 
 def _pill_arc(h: float, id: float, od: float, a: float):
     t = (od - id) / 2
     obj = _pill2d(h, t).translate([id / 2 + t / 2, 0, 0]).rotate_extrude(a)
-    obj += _pill3d(h, t).translate([id / 2 + t / 2, 0, 0])
-    obj += _pill3d(h, t).translate([id / 2 + t / 2, 0, 0]).rotate([0, 0, a])
+    obj += pill3d(h, t).translate([id / 2 + t / 2, 0, 0])
+    obj += pill3d(h, t).translate([id / 2 + t / 2, 0, 0]).rotate([0, 0, a])
     return obj.rotate(a / -2 + 180)
 
 
@@ -45,13 +45,13 @@ def __bridge_arm(
 ) -> OpenSCADObjectPlus:
     t_tongue = (tongue_od-tongue_id)/2
     tongue_slice = (
-        _pill3d(h=h, t=t_tongue)
+        pill3d(h=h, t=t_tongue)
         .translate([tongue_id / 2 + t_tongue / 2, 0, 0])
         .rotate(a_tongue+180)
     )
     t_backbone = (backbone_od-backbone_id)/2
     backbone_slice = (
-        _pill3d(h=h, t=t_backbone)
+        pill3d(h=h, t=t_backbone)
         .translate([backbone_id / 2 + t_backbone / 2, 0, 0])
         .rotate(a_backbone+180)
     )
@@ -102,21 +102,6 @@ def hose_clip(
         od=backbone_od,
         a=backbone_arc_a,
     )
-
-    if not CONFIG.library.tpu_mode:
-        obj -= _pill_arc(
-            h=height*2,
-            id=tongue_od,
-            od=backbone_id,
-            a=backbone_arc_a - finger_half_angle*2
-        )
-        obj -= _inverse_capped_pill_arc(
-            h=height*2,
-            id=hose_diameter,
-            od=tongue_od,
-            a=tongue_back_angle,
-            eps=radial_gap
-        )
 
     return obj
 

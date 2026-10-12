@@ -14,7 +14,7 @@ clip_radial_gap = 0.8  # Radial gap between the tongue and the outer wall.
 clip_backbone_wall_thickness = 1.6  # Structural outer wall thickness of a hose clip.
 webbing_wall_thickness = 2.8  # Structural outer wall for clamping around webbing.
 standoff_rounding_radius = 2  # Radius that rounds the convex corners of a standoff footprint.
-tpu_mode = false  # Removes the gap which creates the flexible tongue. Decrease the opening angles and hose tolerance as well.
+tpu_mode = true  # Removes the gap which creates the flexible tongue. Decrease the opening angles and hose tolerance as well.
 
 [hardware]
 inflator_tube_diameter = 27.0  # BCD inflator tube, held by the combo clip.
@@ -59,7 +59,7 @@ clip_grip_length = 10.0  # Length of hose each of the two clips grips.
 
 [two_way_clip]
 hose_1_diameter = 8.0  # Hose in the clip on the +X side. Subtract 0.5 for a snug fit.
-hose_2_diameter = 11.5  # Hose in the clip on the -X side. Subtract 0.5 for a snug fit.
-clip_grip_length = 10.0  # Length of hose each clip grips.
-clip_center_distance = 10.0  # Distance from the hub centre to each clip centre.
-cord_hole_diameter = 4.0  # Diameter of the cord hole through the hub, along the hoses.
+hose_2_diameter = 27  # Hose in the clip on the -X side. Subtract 0.5 for a snug fit.
+clip_center_distance = 22.0  # Distance from the hub centre to each clip centre.
+clip_grip_length = 10.0  # Length of hose each of the two clips grips.
+lattice_only = false  # Whether to use minimal lattice mode.

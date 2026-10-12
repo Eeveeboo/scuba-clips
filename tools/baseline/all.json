@@ -1,6 +1,6 @@
 {
   "bbox_max": [
-    214.261,
+    215.261,
     38.075,
     24.994
   ],
@@ -9,17 +9,17 @@
     -105.294,
     -25.5
   ],
-  "edges_not_used_twice": 3392,
+  "edges_not_used_twice": 3671,
   "file": "all.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.12",
+  "openscad_version": "2026.09.30",
   "size": [
-    245.961,
+    246.961,
     143.37,
     50.494
   ],
-  "source_commit": "98c11cd",
+  "source_commit": "0e627dc",
   "tessellation": 50,
-  "triangles": 91814,
-  "volume_mm3": 62140.163
+  "triangles": 84268,
+  "volume_mm3": 66185.196
 }

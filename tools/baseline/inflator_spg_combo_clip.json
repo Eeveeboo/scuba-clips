@@ -9,17 +9,17 @@
     -22.362,
     -5.0
   ],
-  "edges_not_used_twice": 913,
+  "edges_not_used_twice": 872,
   "file": "inflator_spg_combo_clip.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.12",
+  "openscad_version": "2026.09.30",
   "size": [
     46.148,
     39.433,
     10.0
   ],
-  "source_commit": "98c11cd",
+  "source_commit": "0e627dc",
   "tessellation": 50,
-  "triangles": 22820,
-  "volume_mm3": 5137.336
+  "triangles": 20792,
+  "volume_mm3": 6175.728
 }

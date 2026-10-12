@@ -66,7 +66,7 @@ class LibraryConfig:
         2, "Radius that rounds the convex corners of a standoff footprint."
     )
     tpu_mode: bool = _field(
-        False, "Removes the gap which creates the flexible tongue. Decrease the opening angles and hose tolerance as well."
+        True, "Removes the gap which creates the flexible tongue. Decrease the opening angles and hose tolerance as well."
     )
 
 
@@ -211,15 +211,17 @@ class TwoWayClipConfig:
         "Hose in the clip on the +X side. Subtract 0.5 for a snug fit.",
     )
     hose_2_diameter: float = _field(
-        11.5,
+        27,
         "Hose in the clip on the -X side. Subtract 0.5 for a snug fit.",
     )
-    clip_grip_length: float = _field(10.0, "Length of hose each clip grips.")
     clip_center_distance: float = _field(
-        10.0, "Distance from the hub centre to each clip centre."
+        22.0, "Distance from the hub centre to each clip centre."
     )
-    cord_hole_diameter: float = _field(
-        4.0, "Diameter of the cord hole through the hub, along the hoses."
+    clip_grip_length: float = _field(
+        10.0, "Length of hose each of the two clips grips."
+    )
+    lattice_only: bool = _field(
+        False, "Whether to use minimal lattice mode."
     )
 
 

@@ -9,17 +9,17 @@
     -5.294,
     -10.0
   ],
-  "edges_not_used_twice": 954,
+  "edges_not_used_twice": 930,
   "file": "lower_octi_retaining_clip.stl",
   "open_edges": 0,
-  "openscad_version": "2026.09.12",
+  "openscad_version": "2026.09.30",
   "size": [
     63.4,
     26.787,
     19.994
   ],
-  "source_commit": "98c11cd",
+  "source_commit": "0e627dc",
   "tessellation": 50,
-  "triangles": 21528,
-  "volume_mm3": 9973.814
+  "triangles": 20076,
+  "volume_mm3": 9832.538
 }
