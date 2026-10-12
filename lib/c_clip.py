@@ -10,7 +10,8 @@ Every builder here builds centred on the origin. The caller translates.
 
 from __future__ import annotations
 
-from lib.config import CONFIG, hose_clip_base_diameter, hose_clip_total_diameter
+import lib.c_clip2
+from lib.config import CONFIG
 from lib.scad import (
     OpenSCADObjectPlus,
     cylinder,
@@ -125,9 +126,9 @@ def c_ring_rounded_two_openings(
 
 def hose_clip(
     hose_diameter: float = 12,
-    backbone_wall_thickness: float = 3,
-    radial_gap: float = 3,
-    tongue_wall_thickness: float = 1.5,
+    backbone_wall_thickness: float = CONFIG.library.clip_backbone_wall_thickness,
+    radial_gap: float = CONFIG.library.clip_radial_gap,
+    tongue_wall_thickness: float = CONFIG.library.clip_tongue_wall_thickness,
     tongue_back_angle: float = CONFIG.hardware.tongue_back_angle,
     backbone_front_angle: float = CONFIG.hardware.backbone_front_angle,
     opening_angle_offset: float = CONFIG.hardware.opening_angle_offset,
@@ -138,6 +139,21 @@ def hose_clip(
     front (+X), and `opening_angle_offset` the extra front opening of the tongue
     and of the relief cut. The angle defaults come from the `[hardware]` config
     section."""
+
+
+    if CONFIG.library.tpu_mode:
+        return lib.c_clip2.hose_clip(
+            hose_diameter=hose_diameter,
+            backbone_wall_thickness=backbone_wall_thickness,
+            radial_gap=radial_gap,
+            tongue_wall_thickness=tongue_wall_thickness,
+            tongue_back_angle=tongue_back_angle,
+            backbone_front_angle=backbone_front_angle,
+            opening_angle_offset=opening_angle_offset,
+            height=height
+        )
+
+
     if not (
         hose_diameter > 0
         and backbone_wall_thickness > 0
@@ -158,7 +174,7 @@ def hose_clip(
     if not (backbone_front_angle + opening_angle_offset + tongue_back_angle < 360):
         raise ValueError("hose_clip: the front and back openings must leave material")
 
-    base_diameter = hose_clip_base_diameter(hose_diameter, tongue_wall_thickness)
+    base_diameter = hose_diameter
     tongue_front_angle = backbone_front_angle + opening_angle_offset
     # Mid-wall radii of the tongue and the backbone: the two ends of each arm.
     tongue_mid_radius = (base_diameter - tongue_wall_thickness / 2) / 2
@@ -208,9 +224,9 @@ def hose_clip(
 
 def hose_clip_keepout(
     hose_diameter: float = 12,
-    backbone_wall_thickness: float = 3,
-    radial_gap: float = 3,
-    tongue_wall_thickness: float = 1.5,
+    backbone_wall_thickness: float = CONFIG.library.clip_backbone_wall_thickness,
+    radial_gap: float = CONFIG.library.clip_radial_gap,
+    tongue_wall_thickness: float = CONFIG.library.clip_tongue_wall_thickness,
     tongue_back_angle: float = CONFIG.hardware.tongue_back_angle,
     backbone_front_angle: float = CONFIG.hardware.backbone_front_angle,
     opening_angle_offset: float = CONFIG.hardware.opening_angle_offset,
@@ -223,6 +239,21 @@ def hose_clip_keepout(
     for symmetry with `hose_clip`, so a caller passes one argument list to a part
     and to its keep-out volume. Do not remove them; they do not change this
     volume."""
+
+
+    if CONFIG.library.tpu_mode:
+        return lib.c_clip2.hose_clip_keepout(
+            hose_diameter=hose_diameter,
+            backbone_wall_thickness=backbone_wall_thickness,
+            radial_gap=radial_gap,
+            tongue_wall_thickness=tongue_wall_thickness,
+            tongue_back_angle=tongue_back_angle,
+            backbone_front_angle=backbone_front_angle,
+            opening_angle_offset=opening_angle_offset,
+            height=height
+        )
+
+
     if not (
         hose_diameter > 0
         and backbone_wall_thickness > 0
@@ -237,13 +268,9 @@ def hose_clip_keepout(
     if not (backbone_front_angle > 0 and backbone_front_angle < 360):
         raise ValueError("hose_clip_keepout: backbone_front_angle must be in (0, 360)")
 
-    clip_total_diameter = hose_clip_total_diameter(
-        hose_diameter, backbone_wall_thickness, radial_gap, tongue_wall_thickness
-    )
-
     rough_keepout = cylinder(
-        h=height + 1, r=clip_total_diameter / 2, center=True
-    ) + pie_wedge(clip_total_diameter, backbone_front_angle, height + 1)
+        h=height + 1, d=hose_diameter + radial_gap*2, center=True
+    ) + pie_wedge(hose_diameter, backbone_front_angle, height + 1)
 
     return rough_keepout - hose_clip(
         hose_diameter=hose_diameter,

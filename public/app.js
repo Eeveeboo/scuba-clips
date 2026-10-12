@@ -47,6 +47,11 @@ function fieldInput(field) {
   if (field.type === "float_list") {
     input.type = "text";
     input.value = field.default.map((value) => String(value)).join(", ");
+  } else if (field.type === "bool") {
+    // A checkbox carries its state in `checked`, not `value`, so the boolean
+    // needs its own branches in fieldInput, applyUrl and collectParams.
+    input.type = "checkbox";
+    input.checked = field.default;
   } else {
     input.type = "number";
     input.step = field.type === "int" ? "1" : "any";
@@ -103,7 +108,11 @@ function applyUrl() {
     }
     const input = form.elements[key];
     if (input) {
-      input.value = value;
+      if (input.dataset.type === "bool") {
+        input.checked = value === "true";
+      } else {
+        input.value = value;
+      }
     }
   }
 }
@@ -112,7 +121,11 @@ function collectParams() {
   const params = new URLSearchParams();
   params.set("model", form.elements.model.value);
   for (const input of form.querySelectorAll("[data-type]")) {
-    params.set(input.name, input.value);
+    if (input.dataset.type === "bool") {
+      params.set(input.name, input.checked ? "true" : "false");
+    } else {
+      params.set(input.name, input.value);
+    }
   }
   return params;
 }
